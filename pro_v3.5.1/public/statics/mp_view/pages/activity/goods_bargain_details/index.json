@@ -1,0 +1,11 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTextStyle": "white",
+  "usingComponents": {
+    "easy-loadimage": "/components/easy-loadimage/easy-loadimage",
+    "base-drawer": "/components/tui-drawer/tui-drawer",
+    "count-down": "/components/countDown/index",
+    "nav-bar": "/components/NavBar",
+    "zb-code": "/components/zb-code/zb-code"
+  }
+}
