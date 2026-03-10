@@ -42,14 +42,14 @@
 				/* 监听电脑浏览器窗口尺寸改变 */
 				window.onresize = function(){
 					/* 窗口宽度 小于或等于420px 时，跳转回H5页面 */
-					if(window.innerWidth <= 420){
-						window.location.pathname = '/';
-					}
+				if(window.innerWidth <= 420){
+					window.location.pathname = '/h5/';
+				}
 				}
 			}
 		</script>
 	</head>
 	<body>
-		<iframe src="/?type=1"></iframe>
+		<iframe src="/h5/?type=1"></iframe>
 	</body>
 </html>

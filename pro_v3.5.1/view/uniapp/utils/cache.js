@@ -193,30 +193,34 @@ class Cache {
 	 * 清除过期缓存
 	 */
 	clearOverdue() {
-		let cahceValue = this.cacheGetHandler(this.cacheExpire),
-			time = this.time(),
-			newBeOverdueValue = [],
-			newTagValue = [];
+		try {
+			let cahceValue = this.cacheGetHandler(this.cacheExpire),
+				time = this.time(),
+				newBeOverdueValue = [],
+				newTagValue = [];
 
-		if (cahceValue && typeof cahceValue === 'object' && cahceValue.length) {
-			cahceValue.map(item => {
-				if (item) {
-					if ((item.expire !== undefined && item.expire > time) || item.expire === 0) {
-						newTagValue.push(item);
-					} else {
-						newBeOverdueValue.push(item.key);
+			if (Array.isArray(cahceValue) && cahceValue.length) {
+				cahceValue.map(item => {
+					if (item) {
+						if ((item.expire !== undefined && item.expire > time) || item.expire === 0) {
+							newTagValue.push(item);
+						} else {
+							newBeOverdueValue.push(item.key);
+						}
 					}
-				}
-			});
+				});
+			}
+			//保存没有过期的缓存标签
+			if (!Array.isArray(cahceValue) || newTagValue.length !== cahceValue.length) {
+				this.cacheSetHandler(this.cacheExpire, newTagValue);
+			}
+			//删除过期缓存
+			newBeOverdueValue.forEach(k => {
+				this.cacheClearHandler(k);
+			})
+		} catch (e) {
+			// H5 初始化阶段 uni 存储 API 可能尚未就绪，忽略错误
 		}
-		//保存没有过期的缓存标签
-		if (newTagValue.length !== cahceValue.length) {
-			this.cacheSetHandler(this.cacheExpire, newTagValue);
-		}
-		//删除过期缓存
-		newBeOverdueValue.forEach(k => {
-			this.cacheClearHandler(k);
-		})
 	}
 }
 

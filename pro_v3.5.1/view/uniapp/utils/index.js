@@ -83,6 +83,8 @@ export function parseQuery() {
 // #ifdef H5
 	const VUE_APP_WS_URL = process.env.VUE_APP_WS_URL || `ws://${location.hostname}`;
 	export {VUE_APP_WS_URL}
+	const VUE_APP_API_URL = process.env.VUE_APP_API_URL || `${location.protocol}//${location.hostname}`;
+	export {VUE_APP_API_URL}
 // #endif
 
 

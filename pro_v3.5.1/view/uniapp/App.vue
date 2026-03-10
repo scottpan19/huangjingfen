@@ -19,8 +19,8 @@
 			isLogin: false,
 			userInfo: {},
 			globalData: false,
-			windowHeight: uni.getWindowInfo().windowHeight + 'px',
-			sysHeight:uni.getWindowInfo().statusBarHeight,
+			windowHeight: (uni.getWindowInfo && uni.getWindowInfo() ? uni.getWindowInfo().windowHeight : window.innerHeight || 667) + 'px',
+			sysHeight: uni.getWindowInfo && uni.getWindowInfo() ? uni.getWindowInfo().statusBarHeight : 0,
 		},
 		computed: mapGetters(['isLogin', 'cartNum']),
 		watch: {
@@ -39,15 +39,15 @@
 			}
 		},
 		onShow(options) {
-				const queryData = uni.getEnterOptionsSync(); // uni-app版本 3.5.1+ 支持
-				if (queryData.query.spid) {
+				const queryData = (uni.getEnterOptionsSync && uni.getEnterOptionsSync()) || { query: {} }; // uni-app版本 3.5.1+ 支持
+				if (queryData.query && queryData.query.spid) {
 					this.$Cache.set('spread', queryData.query.spid);
 					this.globalData.spid = queryData.query.spid;
 					this.globalData.pid = queryData.query.spid;
 					silenceBindingSpread(this.globalData);
 				}
 				// #ifdef MP
-				if (queryData.query.scene) {
+				if (queryData.query && queryData.query.scene) {
 					let param = this.$util.getUrlParams(decodeURIComponent(queryData.query.scene));
 					if (param.spid) {
 						this.$Cache.set('spread', param.spid);
@@ -90,12 +90,12 @@
 				this.remoteRegister(option.query.remote_token);
 			}
 			this.setScript();
-			const queryData = uni.getEnterOptionsSync();
+			const queryData = (uni.getEnterOptionsSync && uni.getEnterOptionsSync()) || { query: {} };
 			uni.getSystemInfo({
 				success(e) {
 					/* 窗口宽度大于420px且不在PC页面且不在移动设备时跳转至 PC.html 页面 */
 					if (e.windowWidth > 420 && !window.top.isPC && !/iOS|Android/i.test(e.system)) {
-						window.location.pathname = '/static/html/pc.html';
+						window.location.pathname = '/h5/static/html/pc.html';
 					}
 				}
 			});

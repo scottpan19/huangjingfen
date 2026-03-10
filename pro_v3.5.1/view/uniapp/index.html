@@ -15,6 +15,23 @@
 		window.wx = null;
 		//uniapp默认的wx重置
 		</script>
+		<script>
+		/* uni H5 polyfill: 在 UniApp 运行时初始化前提供功能性桥接，防止连接超时 */
+		;(function(){
+		  var p={};
+		  p.request=function(o){o=o||{};var x=new XMLHttpRequest(),m=(o.method||'GET').toUpperCase(),u=o.url||'';if(o.data&&(m==='GET'||m==='HEAD')){var q=Object.keys(o.data).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(o.data[k]);}).join('&');if(q)u+=(u.indexOf('?')>=0?'&':'?')+q;}try{x.open(m,u,true);}catch(e){o.fail&&o.fail({errMsg:'request:fail '+e.message});return;}var h=o.header||o.headers||{};Object.keys(h).forEach(function(k){try{x.setRequestHeader(k,h[k]);}catch(e){}});x.onreadystatechange=function(){if(x.readyState!==4)return;var s=x.status,d;try{d=JSON.parse(x.responseText);}catch(e){d=x.responseText;}var r={statusCode:s,data:d,header:{}};if(s>=200&&s<400){o.success&&o.success(r);}else{o.fail&&o.fail({errMsg:'request:fail '+s});}o.complete&&o.complete(r);};x.onerror=function(){var e={errMsg:'request:fail network error'};o.fail&&o.fail(e);o.complete&&o.complete(e);};var b=null;if(o.data&&m!=='GET'&&m!=='HEAD'){b=typeof o.data==='string'?o.data:JSON.stringify(o.data);}try{x.send(b);}catch(e){o.fail&&o.fail({errMsg:'request:fail '+e.message});}};
+		  p.getStorageSync=function(k){try{var v=localStorage.getItem(k);if(v===null)return undefined;try{return JSON.parse(v);}catch(e){return v;}}catch(e){return undefined;}};
+		  p.setStorageSync=function(k,d){try{localStorage.setItem(k,typeof d==='object'?JSON.stringify(d):String(d));}catch(e){}};
+		  p.removeStorageSync=function(k){try{localStorage.removeItem(k);}catch(e){}};
+		  p.getWindowInfo=function(){return{windowWidth:window.innerWidth||375,windowHeight:window.innerHeight||667,screenWidth:window.screen?window.screen.width:375,screenHeight:window.screen?window.screen.height:667,statusBarHeight:0,safeAreaInsets:{top:0,bottom:0,left:0,right:0}};};
+		  p.getEnterOptionsSync=function(){var q={};try{var s=location.search.slice(1);if(s)s.split('&').forEach(function(pair){var kv=pair.split('=');if(kv[0])q[decodeURIComponent(kv[0])]=decodeURIComponent(kv[1]||'');});}catch(e){}return{query:q,path:location.pathname};};
+		  /* 用代理拦截 window.uni 的赋值，把真实实现合并进去 */
+		  var _u={};
+		  Object.keys(p).forEach(function(k){_u[k]=p[k];});
+		  function merge(src){if(!src||typeof src!=='object')return;Object.keys(src).forEach(function(k){if(!p[k])_u[k]=src[k];/* 对我们有 polyfill 的 key，只接受真正的实现（非存根）*/});/* 把原型方法也合并进来 */try{var pr=Object.getPrototypeOf(src);if(pr&&pr!==Object.prototype)Object.getOwnPropertyNames(pr).forEach(function(k){if(k!=='constructor'&&!_u[k])try{_u[k]=pr[k].bind(src);}catch(e){}});}catch(e){}}
+		  try{Object.defineProperty(window,'uni',{get:function(){return _u;},set:function(v){merge(v);},configurable:true,enumerable:true});}catch(e){window.uni=_u;}
+		})();
+		</script>
 		<script src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
 		<script src="https://open.work.weixin.qq.com/wwopen/js/jwxwork-1.0.0.js"></script>
 		<script>
