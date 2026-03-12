@@ -122,6 +122,8 @@
 				<view class="btn" @click="reconnect">重新连接</view>
 			</view>
 		</view>
+		<!-- HJF 演示控制面板 -->
+		<HjfDemoPanel />
 	</view>
 </template>
 
@@ -590,7 +592,9 @@
 					getDiyVersion(0).then(res => {
 						let diyVersion = uni.getStorageSync('diyVersion');
 						if ((res.data.version + '0') === diyVersion) {
-							this.setDiyData(JSON.parse(diyData));
+							// Storage may return string or already-parsed object (e.g. on H5)
+							const data = typeof diyData === 'string' ? JSON.parse(diyData) : diyData;
+							this.setDiyData(data);
 						} else {
 							uni.setStorageSync('diyVersion', (res.data.version + '0'));
 							this.getDiyData();

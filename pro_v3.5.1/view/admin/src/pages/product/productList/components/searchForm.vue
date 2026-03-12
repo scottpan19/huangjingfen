@@ -51,6 +51,18 @@
             <Option :value="4">次卡商品</Option>
           </Select>
         </FormItem>
+        <!-- 报单商品筛选 (P1G-02: is_queue_goods) -->
+        <FormItem label="报单商品:">
+          <Select
+            v-model="searchForm.is_queue_goods"
+            @on-change="userSearchs"
+            clearable
+            class="input-add"
+          >
+            <Option :value="1">是</Option>
+            <Option :value="0">否</Option>
+          </Select>
+        </FormItem>
         <FormItem label="商品分类:">
           <el-cascader
             placeholder="请选择商品分类"
@@ -306,6 +318,8 @@ let defaultObj = {
   activity_type: "",
   create_range: "",
   product_clear: "",
+  /** 报单商品筛选：1=是，0=否，空字符串=全部 */
+  is_queue_goods: "",
 }; 
 import timeOptions from "@/utils/timeOptions";
 import { productStoreLabel } from "@/api/product";

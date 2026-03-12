@@ -207,6 +207,40 @@
         <span slot="close">关闭</span>
       </i-switch>
     </FormItem>
+    <!-- 报单商品开关 (P1G-02: is_queue_goods)
+         开启后该商品订单将自动进入公排池，积分支付自动禁用 -->
+    <FormItem label="报单商品：">
+      <i-switch
+        v-model="formValidate.is_queue_goods"
+        :true-value="1"
+        :false-value="0"
+        size="large"
+        @on-change="onQueueGoodsChange"
+      >
+        <span slot="open">是</span>
+        <span slot="close">否</span>
+      </i-switch>
+      <span class="tips ml-10">开启后订单付款即进入公排池，每进4单退1单</span>
+    </FormItem>
+    <!-- 支付方式多选框组 (P1G-02: allow_pay_types)
+         报单商品强制禁用积分支付 -->
+    <FormItem label="支付方式：">
+      <CheckboxGroup v-model="formValidate.allow_pay_types">
+        <Checkbox label="wechat">微信支付</Checkbox>
+        <Checkbox label="alipay">支付宝</Checkbox>
+        <Checkbox label="yue">余额支付</Checkbox>
+        <Checkbox label="integral" :disabled="formValidate.is_queue_goods == 1">
+          积分支付
+          <Tooltip
+            v-if="formValidate.is_queue_goods == 1"
+            content="报单商品不支持积分支付"
+            placement="top"
+          >
+            <Icon type="ios-information-circle-outline" />
+          </Tooltip>
+        </Checkbox>
+      </CheckboxGroup>
+    </FormItem>
     <FormItem label="自定义留言：">
       <i-switch v-model="customBtn" @on-change="customMessBtn" size="large">
         <span slot="open">开启</span>
@@ -279,6 +313,10 @@ export default {
         system_form_id: "",
         specs: [],
         share_content: "",
+        /** 报单商品标记：1=是报单商品，0=普通商品 */
+        is_queue_goods: 0,
+        /** 允许的支付方式列表，报单商品不含 integral */
+        allow_pay_types: ["wechat", "alipay", "yue"],
       },
       formTypeList: [],
       formColumns: [
@@ -338,6 +376,19 @@ export default {
     },
     handleFill(val, type) {
       this.formValidate[type] = val;
+    },
+    /**
+     * 报单商品开关变更回调。
+     * 开启时强制从 allow_pay_types 中移除 "integral"（积分支付）；
+     * 关闭时不自动恢复，由运营人员按需勾选。
+     * @param {number} val - 新值：1=报单商品，0=普通商品
+     */
+    onQueueGoodsChange(val) {
+      if (val === 1) {
+        this.formValidate.allow_pay_types = this.formValidate.allow_pay_types.filter(
+          (t) => t !== "integral"
+        );
+      }
     },
     changeForm(e) {
       this.getSystemFormInfo(e, { type: 1 });

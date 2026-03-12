@@ -13,6 +13,7 @@ namespace crmeb\listeners;
 
 
 use crmeb\interfaces\ListenerInterface;
+use Swoole\Runtime;
 
 /**
  * swoole启动监听
@@ -28,6 +29,19 @@ class SwooleStartListen implements ListenerInterface
      */
     public function handle($event): void
     {
+        if (!extension_loaded('swoole')) {
+            return;
+        }
 
+        $flags = Runtime::getHookFlags();
+
+        if (defined('SWOOLE_HOOK_CURL')) {
+            $flags &= ~SWOOLE_HOOK_CURL;
+        }
+        if (defined('SWOOLE_HOOK_NATIVE_CURL')) {
+            $flags &= ~SWOOLE_HOOK_NATIVE_CURL;
+        }
+
+        Runtime::setHookFlags($flags);
     }
 }

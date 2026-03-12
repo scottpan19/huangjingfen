@@ -43,10 +43,6 @@ export default {
 				<view class="name display-add" v-if="!userInfo.uid" @tap="openAuto">请点击授权</view>
 				<view class="acea-row row-middle" v-if="userInfo.uid">
 					<view class="name">{{ userInfo.nickname }}</view><strong></strong>
-					<view class="vip flex-center" v-if="userInfo.level">
-						<text class="iconfont icon-huiyuandengji"></text>
-						V{{userInfo.level}}
-					</view>
 				</view>
 				<view class="flex-y-center mt-10">
 					<view class="h-42 flex-center fs-22 text--w111-fff pl-16 pr-14 rd-30rpx b-f mr-12" 
@@ -60,7 +56,13 @@ export default {
 				</view>
 				<template v-if="!userInfo.is_channel && !userInfo.is_service">
 					<view class="bind-phone" v-if="!userInfo.phone && userInfo.uid" @tap="bindPhone">绑定手机号</view>
-					<view class="phone" v-else>{{ perShowType ? 'ID：' + userInfo.uid : userInfo.phone }}</view>
+					<view class="acea-row row-middle" v-else>
+						<view class="phone">{{ perShowType ? 'ID：' + userInfo.uid : userInfo.phone }}</view>
+						<view class="vip flex-center" v-if="userInfo.level">
+							<text class="iconfont icon-huiyuandengji"></text>
+							{{ userInfo.vip_name || ('V' + userInfo.level) }}
+						</view>
+					</view>
 				</template>
 				
 			</view>
@@ -220,18 +222,17 @@ export default {
 	}
 }
 .vip{
-	// width: 64rpx;
-	height: 26rpx;
+	height: 40rpx;
 	background: #FEF0D9;
 	border: 1px solid #FACC7D;
 	border-radius: 50rpx;
-	font-size: 18rpx;
-	font-weight: 500;
+	font-size: 26rpx;
+	font-weight: 600;
 	color: #DFA541;
 	margin-left: 10rpx;
-	padding: 0 6rpx;
+	padding: 0 12rpx;
 	.iconfont {
-		font-size: 20rpx !important;
+		font-size: 28rpx !important;
 		margin-right: 4rpx;
 		color: #DFA541 !important;
 	}

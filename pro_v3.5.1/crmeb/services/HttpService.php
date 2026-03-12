@@ -70,6 +70,55 @@ class HttpService
     }
 
     /**
+     * 在 Swoole 下对 HTTPS 使用 PHP 流请求，避免未编译 OpenSSL 的 Swoole curl 报错
+     * @param string $url
+     * @param string $method
+     * @param array $data
+     * @param array|false $header
+     * @param int $timeout
+     * @return bool|string
+     */
+    private static function requestByStream(string $url, string $method, array $data, $header, int $timeout): bool|string
+    {
+        $method = strtoupper($method);
+        if ($method === 'GET' && !empty($data)) {
+            $url .= (strpos($url, '?') === false ? '?' : '&') . http_build_query($data);
+        }
+        $opts = [
+            'http' => [
+                'method' => $method,
+                'timeout' => (float) $timeout,
+                'ignore_errors' => true,
+            ],
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+            ],
+        ];
+        if ($header !== false && is_array($header)) {
+            $opts['http']['header'] = implode("\r\n", $header);
+        }
+        if ($method === 'POST' && !empty($data)) {
+            $opts['http']['content'] = is_array($data) ? http_build_query($data) : $data;
+        }
+        $ctx = stream_context_create($opts);
+        $content = @file_get_contents($url, false, $ctx);
+        if ($content === false) {
+            self::$status = null;
+            self::$curlError = 'stream request failed';
+            return false;
+        }
+        $responseHeaders = $http_response_header ?? [];
+        self::$headerStr = implode("\r\n", $responseHeaders);
+        $code = 0;
+        if (!empty($responseHeaders[0]) && preg_match('/\d{3}/', $responseHeaders[0], $m)) {
+            $code = (int) $m[0];
+        }
+        self::$status = ['http_code' => $code, 'header_size' => 0];
+        return $code === 200 ? $content : false;
+    }
+
+    /**
      * curl 请求
      * @param $url
      * @param string $method
@@ -84,8 +133,16 @@ class HttpService
         self::$curlError = null;
         self::$headerStr = null;
 
-        $curl = curl_init($url);
         $method = strtoupper($method);
+        $isHttps = (strpos($url, 'https://') === 0);
+        $inSwoole = extension_loaded('swoole') && class_exists(\Swoole\Coroutine::class, false);
+
+        // Swoole 未编译 OpenSSL 时，curl 无法请求 HTTPS，改用 PHP 流
+        if ($inSwoole && $isHttps) {
+            return self::requestByStream($url, $method, is_array($data) ? $data : [], $header, $timeout ?: 300);
+        }
+
+        $curl = curl_init($url);
         //请求方式
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
         //post请求

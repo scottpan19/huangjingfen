@@ -27,7 +27,12 @@ module.exports = {
   productionSourceMap: false, //关闭生产环境下的SourceMap映射文件
   devServer: {
     publicPath: Setting.publicPath,
-
+    port: 8080,
+    proxy: {
+      '/adminapi': { target: 'http://127.0.0.1:20199', changeOrigin: true },
+      '/api': { target: 'http://127.0.0.1:20199', changeOrigin: true },
+      '/kefuapi': { target: 'http://127.0.0.1:20199', changeOrigin: true },
+    },
   },
 
   // 打包优化

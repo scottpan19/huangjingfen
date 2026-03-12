@@ -54,6 +54,21 @@
                   <div class="iconfont iconxiayi"></div>
                 </div>
               </FormItem>
+              <FormItem label="会员等级：" label-for="hjf_member_level">
+                <Select
+                  v-model="userFrom.hjf_member_level"
+                  placeholder="请选择"
+                  element-id="hjf_member_level"
+                  clearable
+                  class="input-add"
+                >
+                  <Option :value="0">普通会员</Option>
+                  <Option :value="1">创客</Option>
+                  <Option :value="2">云店</Option>
+                  <Option :value="3">服务商</Option>
+                  <Option :value="4">分公司</Option>
+                </Select>
+              </FormItem>
               <FormItem label="访问时间：" label-for="user_time">
                 <DatePicker
                   :editable="false"
@@ -387,7 +402,44 @@
             <div>{{ row.isMember ? "是" : "否" }}</div>
           </template>
         </vxe-column>
-        <vxe-column field="level" title="用户等级" min-width="90"></vxe-column>
+        <vxe-column field="level" title="会员等级" min-width="130">
+          <template v-slot="{ row }">
+            <div class="level-cell">
+              <template v-if="levelMap[row.level]">
+                <img
+                  v-if="levelMap[row.level].icon"
+                  class="level-icon"
+                  :src="levelMap[row.level].icon"
+                  :alt="levelMap[row.level].name"
+                />
+                <span class="level-badge" :style="{ background: levelMap[row.level].color || '#dab176' }">
+                  {{ levelMap[row.level].name }}
+                </span>
+              </template>
+              <span v-else class="level-none">普通会员</span>
+            </div>
+          </template>
+        </vxe-column>
+        <vxe-column field="member_level" title="HJF等级" min-width="110">
+          <template v-slot="{ row }">
+            <HjfMemberBadge
+              v-if="row.member_level != null"
+              :level="Number(row.member_level)"
+              size="small"
+            />
+            <span v-else class="level-none">普通会员</span>
+          </template>
+        </vxe-column>
+        <vxe-column field="direct_count" title="直推人数" min-width="90">
+          <template v-slot="{ row }">
+            <span>{{ row.direct_count != null ? row.direct_count : '-' }}</span>
+          </template>
+        </vxe-column>
+        <vxe-column field="umbrella_orders" title="伞下订单数" min-width="100">
+          <template v-slot="{ row }">
+            <span>{{ row.umbrella_orders != null ? row.umbrella_orders : '-' }}</span>
+          </template>
+        </vxe-column>
         <vxe-column field="group_id" title="分组" min-width="100"></vxe-column>
         <vxe-column field="phone" title="手机号" min-width="110"></vxe-column>
         <vxe-column
@@ -412,7 +464,8 @@
             <a @click="changeMenu(row, '1')">详情</a>
             <Divider type="vertical" />
             <a @click="changeMenu(row, '10')">编辑</a>
-            <!-- <a @click="extendInfo(row)" v-if="row.is_extend_info">信息补充</a> -->
+            <Divider type="vertical" />
+            <a @click="openLevelModal(row)">调整等级</a>
           </template>
         </vxe-column>
       </vxe-table>
@@ -664,10 +717,42 @@
     >
       <userImport v-if="importShow" @close="importShow = false"></userImport>
     </Modal>
+    <!-- 调整会员等级弹窗 -->
+    <Modal
+      v-model="levelModal.show"
+      title="调整会员等级"
+      width="420"
+      :mask-closable="false"
+      @on-visible-change="onLevelModalChange"
+    >
+      <Form :label-width="90" @submit.native.prevent>
+        <FormItem label="当前用户：">
+          <span>{{ levelModal.nickname }}（UID: {{ levelModal.uid }}）</span>
+        </FormItem>
+        <FormItem label="会员等级：">
+          <Select v-model="levelModal.level" placeholder="请选择目标等级">
+            <Option :value="0">普通会员</Option>
+            <Option :value="1">创客</Option>
+            <Option :value="2">云店</Option>
+            <Option :value="3">服务商</Option>
+            <Option :value="4">分公司</Option>
+          </Select>
+        </FormItem>
+      </Form>
+      <div slot="footer">
+        <Button @click="levelModal.show = false">取消</Button>
+        <Button type="primary" :loading="levelModal.loading" @click="handleLevelChange">确定</Button>
+      </div>
+    </Modal>
   </div>
 </template>
 
 <script>
+/**
+ * 用户列表页面
+ * @description Admin 用户管理主列表，支持多维度筛选、会员等级彩色展示、直推/伞下统计及等级快速调整。
+ * @module pages/user/list
+ */
 import { formatDate } from "@/utils/validate";
 import userLabel from "../../../components/userLabel";
 import labelList from "@/components/labelList";
@@ -692,6 +777,7 @@ import {
   exportUserData,
 } from "@/api/user";
 import { agentSpreadApi } from "@/api/agent";
+import { memberList, memberSetLevel } from "@/api/hjfMember";
 import editFrom from "../../../components/from/from";
 import sendFrom from "@/components/sendCoupons/index";
 import userDetails from "./handle/userDetails";
@@ -699,6 +785,7 @@ import newsCategory from "@/components/newsCategory/index";
 import city from "@/utils/city";
 import customerInfo from "@/components/customerInfo";
 import userImport from "./handle/userImport.vue";
+import HjfMemberBadge from "@/components/HjfMemberBadge.vue";
 import exportExcel from "@/utils/newToExcel.js";
 import timeOptions from "@/utils/timeOptions";
 export default {
@@ -721,6 +808,7 @@ export default {
     userLabel,
     labelList,
     userImport,
+    HjfMemberBadge,
   },
   data() {
     return {
@@ -779,6 +867,8 @@ export default {
         group_id: "",
         field_key: "",
         is_channel: "",
+        /** 会员等级筛选（HJF 扩展字段）：0 普通 1 创客 2 云店 3 服务商 4 分公司，空串表示全部 */
+        hjf_member_level: "",
       },
       field_key: "",
       level: "",
@@ -825,6 +915,14 @@ export default {
       },
       spread_name: "",
       importShow: false,
+      /** @type {{ show: boolean, uid: number, nickname: string, level: number, loading: boolean }} */
+      levelModal: {
+        show: false,
+        uid: 0,
+        nickname: "",
+        level: 0,
+        loading: false,
+      },
     };
   },
   watch: {
@@ -859,6 +957,13 @@ export default {
     },
     labelPosition() {
       return this.isMobile ? "top" : "right";
+    },
+    levelMap() {
+      const map = {};
+      this.levelList.forEach((item) => {
+        map[item.id] = item;
+      });
+      return map;
     },
   },
   created() {
@@ -1405,8 +1510,9 @@ export default {
         level: "",
         group_id: "",
         label_id: "",
-        page: 1, // 当前页
-        limit: 20, // 每页显示条数
+        hjf_member_level: "",
+        page: 1,
+        limit: 20,
       };
       this.field_key = "";
       this.level = "";
@@ -1566,6 +1672,67 @@ export default {
     viewImportRecord() {
       this.$router.push({ path: "/admin/user/importRecord" });
     },
+
+    /**
+     * 打开调整等级弹窗
+     * @param {Object} row - 当前行用户数据
+     * @param {number} row.uid - 用户 ID
+     * @param {string} row.nickname - 用户昵称
+     * @param {number} row.member_level - 当前会员等级（HJF 字段）；回退到 row.level
+     */
+    openLevelModal(row) {
+      this.levelModal.uid = row.uid;
+      this.levelModal.nickname = row.nickname;
+      this.levelModal.level = row.member_level != null ? row.member_level : (row.level || 0);
+      this.levelModal.show = true;
+    },
+
+    /**
+     * 弹窗关闭时重置 loading 状态
+     * @param {boolean} visible - 弹窗是否可见
+     */
+    onLevelModalChange(visible) {
+      if (!visible) {
+        this.levelModal.loading = false;
+      }
+    },
+
+    /**
+     * 提交等级调整请求
+     * 调用 memberSetLevel API 更新会员等级，成功后刷新列表。
+     * @returns {Promise<void>}
+     */
+    async handleLevelChange() {
+      this.levelModal.loading = true;
+      try {
+        const res = await memberSetLevel(this.levelModal.uid, this.levelModal.level);
+        this.$Message.success(res.data && res.data.msg ? res.data.msg : "等级调整成功");
+        this.levelModal.show = false;
+        this.getList();
+      } catch (err) {
+        this.$Message.error((err && err.msg) ? err.msg : "操作失败，请重试");
+      } finally {
+        this.levelModal.loading = false;
+      }
+    },
+
+    /**
+     * 设置不考核状态（预留接口，Phase 4 集成时完善）
+     * @param {Object} row - 用户行数据
+     * @param {number} row.uid - 用户 ID
+     * @param {number} row.no_assess - 当前不考核状态（0 正常，1 不考核）
+     */
+    handleNoAssess(row) {
+      const nextStatus = row.no_assess ? 0 : 1;
+      const label = nextStatus === 1 ? "不考核" : "正常考核";
+      this.$Modal.confirm({
+        title: "确认操作",
+        content: `将【${row.nickname}】设置为 <b>${label}</b>？`,
+        onOk: () => {
+          this.$Message.info("功能将在 Phase 4 集成后启用");
+        },
+      });
+    },
   },
 };
 </script>
@@ -1698,6 +1865,35 @@ img {
 
 .vipName {
   color: #dab176;
+}
+
+.level-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.level-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.level-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #fff;
+  white-space: nowrap;
+  line-height: 18px;
+}
+
+.level-none {
+  color: #aaa;
+  font-size: 12px;
 }
 
 .listbox {

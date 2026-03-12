@@ -27,12 +27,15 @@ import BaseMoney from './components/BaseMoney.vue';
 import BaseTag from './components/BaseTag.vue';
 import easyLoadimage from './components/easy-loadimage/easy-loadimage.vue'
 import baseDrawer from '@/components/tui-drawer/tui-drawer.vue';
+import HjfDemoPanel from './components/HjfDemoPanel.vue';
+
 Vue.component('home', home)
 Vue.component('skeleton', skeleton)
 Vue.component('BaseMoney', BaseMoney)
 Vue.component('BaseTag', BaseTag)
 Vue.component('baseDrawer', baseDrawer)
 Vue.component('easyLoadimage', easyLoadimage)
+Vue.component('HjfDemoPanel', HjfDemoPanel)
 // #ifdef H5
 
 

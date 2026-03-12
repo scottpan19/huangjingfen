@@ -183,7 +183,9 @@ const actions = {
 			let diyVersion = uni.getStorageSync('diyVersionNav');
 			if (res.data.version === diyVersion) {
 				let pageFooter = uni.getStorageSync('pageFooterData');
-				commit("SET_PAGE_FOOTER", pageFooter);
+				if (pageFooter && pageFooter.menuList && pageFooter.menuList.length) {
+					commit("SET_PAGE_FOOTER", pageFooter);
+				}
 			} else {
 				uni.setStorageSync('diyVersionNav', res.data.version);
 				let result = await getNavigation();

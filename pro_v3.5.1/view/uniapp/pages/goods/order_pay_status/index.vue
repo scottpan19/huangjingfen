@@ -13,9 +13,27 @@
 					<text class="fs-40 fw-500 text--w111-fff pl-16" v-if="order_pay_info.pay_type == 'offline' && !order_pay_info.paid">订单创建成功</text>
 					<text class="fs-40 fw-500 text--w111-fff pl-16" v-else>{{ order_pay_info.paid ? '订单支付成功' : '等待支付...' }}</text>
 				</view>
+				
+				<!-- 公排入队成功提示 -->
+				<view v-if="isQueueOrder && order_pay_info.paid && queueEntries.length > 0" class="queue-success-notice mt-20">
+					<view class="flex-y-center">
+						<text class="iconfont icon-chenggong fs-28 queue-icon"></text>
+						<text class="fs-26 text--w111-fff">已加入公排队列</text>
+					</view>
+					<view class="fs-22 text--w111-fff mt-8 opacity-80" v-if="queueEntries.length === 1">
+						排队序号 #{{ queueEntries[0].queue_no }}，{{ queueEntries[0].estimated_wait }}
+					</view>
+					<view class="fs-22 text--w111-fff mt-8 opacity-80" v-else>
+						共 {{ queueEntries.length }} 个订单已入队
+					</view>
+				</view>
+				
 				<view class="flex-center mt-30">
 					<view class="w-192 h-64 rd-40rpx flex-center fs-24 text--w111-fff white-border" @tap="goIndex">返回首页</view>
-					<view v-if="!order_pay_info.is_send_gift || !order_pay_info.paid" class="w-192 h-64 rd-40rpx flex-center fs-24 text--w111-fff white-border ml-48" @tap="goOrderDetails">
+					<view v-if="isQueueOrder && order_pay_info.paid" class="w-192 h-64 rd-40rpx flex-center fs-24 text--w111-fff white-border ml-48" @tap="goQueueStatus">
+						查看公排
+					</view>
+					<view v-else-if="!order_pay_info.is_send_gift || !order_pay_info.paid" class="w-192 h-64 rd-40rpx flex-center fs-24 text--w111-fff white-border ml-48" @tap="goOrderDetails">
 						查看订单
 					</view>
 					<view v-else-if="order_pay_info.paid" @click="giftModalShow = true" class="w-192 h-64 rd-40rpx flex-center fs-24 text--w111-fff white-border ml-48">送给好友</view>
@@ -108,6 +126,7 @@ import colors from '@/mixins/color';
 import { HTTP_REQUEST_URL } from '@/config/app';
 import Cache from '@/utils/cache';
 import { userShare } from '@/api/user.js';
+import { getQueueStatus } from '@/api/hjfQueue.js';
 export default {
 	components: {
 		gridsLottery,
@@ -168,9 +187,10 @@ export default {
 				nickname: '',
 				code: ''
 			},
-			userInfo: Cache.get('USER_INFO') || {},
-			mpGiftImg: HTTP_REQUEST_URL + '/statics/images/gift_share.jpg',
-			recommendTitle: ""
+		userInfo: Cache.get('USER_INFO') || {},
+		mpGiftImg: HTTP_REQUEST_URL + '/statics/images/gift_share.jpg',
+		recommendTitle: "",
+		queueEntries: []
 		};
 	},
 	computed: {
@@ -181,6 +201,10 @@ export default {
 			} else {
 				return true;
 			}
+		},
+		isQueueOrder() {
+			if (!this.order_pay_info || !this.order_pay_info.cartInfo) return false;
+			return this.order_pay_info.cartInfo.some(item => item.productInfo && item.productInfo.is_queue_goods == 1);
 		}
 	},
 	watch: {
@@ -327,6 +351,12 @@ export default {
 						uni.hideShareMenu()
 					}
 					this.loading = true;
+					
+					// 如果是公排订单且已支付，加载公排入队信息
+					if (that.isQueueOrder && res.data.paid) {
+						that.loadQueueEntries();
+					}
+					
 					setTimeout(function () {
 						that.getOrderPrize();
 					}, 1000);
@@ -473,6 +503,20 @@ export default {
 				that.recommendTitle = res.data.title ? res.data.title : '猜你喜欢';
 			});
 		},
+		loadQueueEntries() {
+			getQueueStatus()
+				.then((res) => {
+					if (res && res.data && res.data.myOrders && res.data.myOrders.length) {
+						this.queueEntries = res.data.myOrders.filter(item => item.status === 0);
+					}
+				})
+				.catch(() => {});
+		},
+		goQueueStatus() {
+			uni.navigateTo({
+				url: '/pages/queue/status'
+			});
+		},
 		goPage(type, url) {
 			if (type == 1) {
 				uni.navigateTo({
@@ -501,6 +545,20 @@ export default {
 }
 .h-484 {
 	height: 484rpx;
+}
+.queue-success-notice {
+	text-align: center;
+	padding: 20rpx 40rpx;
+	background: rgba(255, 255, 255, 0.15);
+	border-radius: 20rpx;
+	backdrop-filter: blur(10px);
+}
+.queue-icon {
+	color: #52c41a;
+	margin-right: 8rpx;
+}
+.opacity-80 {
+	opacity: 0.8;
 }
 .content {
 	background: #f5f5f5;

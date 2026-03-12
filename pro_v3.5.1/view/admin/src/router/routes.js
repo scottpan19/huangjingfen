@@ -25,6 +25,7 @@ import frameOut from "./modules/frameOut";
 import work from "./modules/work";
 import content from "./modules/content";
 import inventory from "./modules/inventory";
+import hjfQueue from "./modules/hjfQueue.js";
 import { isSupplierPath } from "@/utils/pathUtils";
 
 /**
@@ -208,7 +209,8 @@ const frameIn = [
   statistic,
   work,
   content,
-  inventory
+  inventory,
+  hjfQueue
 ];
 
 /**

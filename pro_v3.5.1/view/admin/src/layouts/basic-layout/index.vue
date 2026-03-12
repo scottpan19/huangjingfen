@@ -63,7 +63,6 @@
           </keep-alive>
         </div>
       </Content>
-      <i-copyright v-if="copyrightShow" />
     </Layout>
     <div v-if="isMobile && !hideSider">
       <Drawer
@@ -91,7 +90,6 @@ import iHeaderUser from "./header-user";
 import iHeaderI18n from "./header-i18n";
 import iHeaderSetting from "./header-setting";
 import iTabs from "./tabs";
-import iCopyright from "@/components/copyright";
 import newSide from "./menu-side/new-side";
 import { mapState, mapGetters, mapMutations } from "vuex";
 import Setting from "@/setting";
@@ -103,7 +101,6 @@ export default {
   components: {
     iMenuHead,
     newSide,
-    iCopyright,
     iHeaderLogo,
     iHeaderCollapse,
     iHeaderReload,
@@ -153,7 +150,6 @@ export default {
       "showI18n",
       "showReload",
       "enableSetting",
-      "copyrightShow",
     ]),
     ...mapState("admin/page", ["keepAlive"]),
     ...mapGetters("admin/menu", ["hideSider"]),

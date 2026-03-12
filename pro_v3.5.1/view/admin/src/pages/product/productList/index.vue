@@ -260,6 +260,13 @@
             <span v-if="row.product_type == 4">次卡商品</span>
           </template>
         </vxe-column>
+        <!-- 报单商品标记列 (P1G-02: is_queue_goods) -->
+        <vxe-column field="is_queue_goods" title="报单商品" min-width="90" align="center">
+          <template v-slot="{ row }">
+            <Tag v-if="row.is_queue_goods == 1" color="green">是</Tag>
+            <Tag v-else color="default">否</Tag>
+          </template>
+        </vxe-column>
         <vxe-column field="price" title="商品售价" min-width="90"></vxe-column>
         <vxe-column field="sales" title="销量" min-width="90"></vxe-column>
         <vxe-column

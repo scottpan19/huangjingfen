@@ -156,11 +156,12 @@
 												<text class="iconfont icon-ic_rightarrow fs-24"></text>
 											</view>
 										</view>
-										<!-- 商品名称 -->
-										<view class="mt-20 fs-30 lh-42rpx text--w111-333 fw-500">
-											<text v-if="storeInfo.brand_name" class="brand-tag">{{ storeInfo.brand_name }}</text>
-											{{ storeInfo.store_name }}
-										</view>
+									<!-- 商品名称 -->
+									<view class="mt-20 fs-30 lh-42rpx text--w111-333 fw-500">
+										<text v-if="storeInfo.brand_name" class="brand-tag">{{ storeInfo.brand_name }}</text>
+										<text v-if="isQueueGoods" class="queue-goods-tag">报单商品</text>
+										{{ storeInfo.store_name }}
+									</view>
 										<!-- 库存销量 -->
 										<view class="flex-between-center mt-24 text--w111-999 fs-22 lh-30rpx">
 											<text v-show="diyProduct.isOpen.includes(0)">
@@ -419,7 +420,12 @@
 								</view>
 								<!-- 底部操作按钮 -->
 								<view class="page_footer bg--w111-fff-s111-80 w-full z-99 fixed-lb pb-safe">
-									<view class="w-full h-104 pl-32 pr-20 flex">
+									<!-- 报单商品公排提示：is_queue_goods=1 时在购买按钮上方显示 -->
+							<view v-if="isQueueGoods" class="queue-goods-notice flex-y-center px-32 py-16">
+								<text class="iconfont icon-ic_user fs-28 queue-goods-notice__icon"></text>
+								<text class="fs-24 queue-goods-notice__text pl-8">报单商品 · 购买后自动参与公排，进四退一全额返还</text>
+							</view>
+							<view class="w-full h-104 pl-32 pr-20 flex">
 										<view class="flex">
 											<view class="flex-col flex-center mr-38" @tap="goPage(2, '/pages/index/index')" v-if="diyProduct.menuList.includes(0)">
 												<text class="iconfont icon-ic_mall fs-40"></text>
@@ -856,7 +862,8 @@ export default {
 			brokerage: '',
 			pageHide: false,
 			pageInvalid: 1,
-			limitInvalid: 20
+			limitInvalid: 20,
+			paymentType: 'weixin'
 		};
 	},
 	filters: {
@@ -914,6 +921,9 @@ export default {
 			} else {
 				return false;
 			}
+		},
+		isQueueGoods() {
+			return this.storeInfo && this.storeInfo.is_queue_goods == 1;
 		},
 		// #ifdef MP
 		shareButtonStyle() {
@@ -2403,5 +2413,58 @@ export default {
 /* 应用动画 */
 .bounce-in {
 	animation: myBounceIn 0.75s ease-out forwards;
+}
+
+/**
+ * 品牌标签 — 商品名称左侧品牌角标
+ */
+.brand-tag {
+	display: inline-block;
+	padding: 0 10rpx;
+	height: 36rpx;
+	line-height: 36rpx;
+	font-size: 20rpx;
+	color: var(--view-theme);
+	border: 1rpx solid var(--view-theme);
+	border-radius: 6rpx;
+	margin-right: 8rpx;
+	vertical-align: middle;
+}
+
+/**
+ * 报单商品标签 — 商品名称区域的「报单商品」角标
+ * 仅当 is_queue_goods=1 时通过 v-if="isQueueGoods" 渲染
+ */
+.queue-goods-tag {
+	display: inline-block;
+	padding: 0 12rpx;
+	height: 36rpx;
+	line-height: 36rpx;
+	font-size: 20rpx;
+	font-weight: 500;
+	color: #1a7e3c;
+	background-color: #e8f7ed;
+	border: 1rpx solid #52c41a;
+	border-radius: 6rpx;
+	margin-right: 8rpx;
+	vertical-align: middle;
+}
+
+/**
+ * 购买区域公排提示条 — 报单商品时显示在底部按钮上方
+ * 仅当 is_queue_goods=1 时通过 v-if="isQueueGoods" 渲染
+ */
+.queue-goods-notice {
+	background-color: #f0faf3;
+	border-top: 1rpx solid #b7eb8f;
+
+	&__icon {
+		color: #52c41a;
+	}
+
+	&__text {
+		color: #389e0d;
+		line-height: 1.5;
+	}
 }
 </style>

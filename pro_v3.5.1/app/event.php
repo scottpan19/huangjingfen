@@ -26,7 +26,9 @@ return [
             \crmeb\listeners\InitSwooleLockListen::class, //初始化
         ],
         //swoole 启动事件
-        'swoole.workerStart' => [],
+        'swoole.workerStart' => [
+            \crmeb\listeners\SwooleStartListen::class,
+        ],
         'swoole.workerExit' => [],
         'swoole.workerError' => [],
         'swoole.workerStop' => [],

@@ -32,24 +32,28 @@
 								class='recharge'>储值</view>
 							<!-- #endif -->
 						</view>
-						<view class='cumulative acea-row row-middle'>
-							<!-- #ifdef APP-PLUS || H5 -->
-							<view class='item'>
-								<view>累计储值(元)</view>
-								<view class='money'>{{userInfo.recharge || 0}}</view>
-							</view>
-							<!-- #endif -->
-							<!-- #ifdef MP -->
-							<view class='item' v-if="recharge_switch">
-								<view>累计储值(元)</view>
-								<view class='money'>{{userInfo.recharge || 0}}</view>
-							</view>
-							<!-- #endif -->
-							<view class='item'>
-								<view>累计消费(元)</view>
-								<view class='money'>{{userInfo.orderStatusSum || 0}}</view>
-							</view>
+					<view class='cumulative acea-row row-middle'>
+						<!-- #ifdef APP-PLUS || H5 -->
+						<view class='item'>
+							<view>累计储值(元)</view>
+							<view class='money'>{{userInfo.recharge || 0}}</view>
 						</view>
+						<!-- #endif -->
+						<!-- #ifdef MP -->
+						<view class='item' v-if="recharge_switch">
+							<view>累计储值(元)</view>
+							<view class='money'>{{userInfo.recharge || 0}}</view>
+						</view>
+						<!-- #endif -->
+						<view class='item'>
+							<view>累计消费(元)</view>
+							<view class='money'>{{userInfo.orderStatusSum || 0}}</view>
+						</view>
+						<view class='item'>
+							<view>公排退款(元)</view>
+							<view class='money'>{{queueRefundedTotal}}</view>
+						</view>
+					</view>
 						<view class="pictrue">
 							<image :src="imgHost+'/statics/images/users/pig.png'"></image>
 						</view>
@@ -129,6 +133,7 @@
 	import {
 		mapGetters
 	} from "vuex";
+	import { getQueueStatus } from '@/api/hjfQueue.js';
 	import recommend from '@/components/recommend/index';
 	import colors from "@/mixins/color";
   import {
@@ -148,6 +153,12 @@
 				userInfo: {
 					now_money: 0,
 				},
+				/**
+				 * 公排累计退款金额（元）
+				 * 由 getQueueStatus() 返回的 myOrders 中 status===1 的订单金额累加而来
+				 * @type {number}
+				 */
+				queueRefundedTotal: 0,
 				hostProduct: [],
 				isClose: false,
 				recharge_switch: 0,
@@ -167,6 +178,7 @@
 					if (newV) {
 						this.getUserInfo();
 						this.get_activity();
+						this.getQueueRefundedTotal();
 					}
 				},
 				deep: true
@@ -179,6 +191,7 @@
 			if (this.isLogin) {
 				this.getUserInfo();
 				this.get_activity();
+				this.getQueueRefundedTotal();
 			} else {
 				toLogin()
 			}
@@ -221,6 +234,23 @@
 				userActivity().then(res => {
 					that.$set(that, "activity", res.data);
 				})
+			},
+			/**
+			 * 获取公排累计退款金额
+			 * 调用 getQueueStatus()，将 myOrders 中 status===1（已退款）的订单金额累加，
+			 * 结果保存到 queueRefundedTotal（保留两位小数，单位：元）
+			 * @see docs/frontend-new-pages-spec.md 6.1.4
+			 * @returns {void}
+			 */
+			getQueueRefundedTotal: function() {
+				let that = this;
+				getQueueStatus().then(res => {
+					const orders = (res.data && res.data.myOrders) || [];
+					const total = orders
+						.filter(order => order.status === 1)
+						.reduce((sum, order) => sum + Number(order.amount || 0), 0);
+					that.queueRefundedTotal = total.toFixed(2);
+				});
 			},
 			/**
 			 * 获取我的推荐

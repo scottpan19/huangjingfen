@@ -108,9 +108,9 @@
 				}
 			},
 			tabBarData(newVal){
-				if(newVal){
+				if (newVal && newVal.effectConfig && newVal.menuList && newVal.menuList.length) {
 					let configData = newVal;
-					if(this.isTabBar){
+					if (this.isTabBar) {
 						this.newData = configData;
 					}
 					this.showTabBar = configData.effectConfig.tabVal;
@@ -120,6 +120,10 @@
 						uni.showTabBar()
 					}
 					this.$emit('newDataStatus', configData.effectConfig.tabVal)
+				} else {
+					// 数据无效或为空时显示原生 tabBar
+					this.showTabBar = false;
+					uni.showTabBar();
 				}
 			}
 		// 	'newData.menuList'(newValue, oldValue) {
@@ -155,7 +159,7 @@
 		methods: {
 			navigationInfo() {
 				//判断渲染来源是一级菜单还是微页面
-				if(this.isTabBar && this.tabBarData.effectConfig){
+				if (this.isTabBar && this.tabBarData && this.tabBarData.effectConfig && this.tabBarData.menuList && this.tabBarData.menuList.length) {
 					let configData = this.tabBarData;
 					this.newData = configData;
 					this.showTabBar = configData.effectConfig.tabVal;
@@ -165,8 +169,11 @@
 						uni.showTabBar()
 					}
 					this.$emit('newDataStatus', configData.effectConfig.tabVal)
+				} else {
+					// 无自定义底部菜单数据或接口未返回时，显示原生 tabBar
+					this.showTabBar = false;
+					uni.showTabBar();
 				}
-				
 			},
 			goRouter(item) {
 				var pages = getCurrentPages();

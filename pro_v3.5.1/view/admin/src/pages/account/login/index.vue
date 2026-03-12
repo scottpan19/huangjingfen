@@ -293,15 +293,6 @@
       :imgSize="{ width: '330px', height: '155px' }"
       ref="verify"
     ></Verify>
-    <div class="footer">
-      <div class="of0b21" v-if="copyright">{{ copyright }}</div>
-      <div class="of0b21" v-else>
-        Copyright ©2014-2024
-        <a class="infoUrl" href="https://www.crmeb.com" target="_blank">{{
-          version
-        }}</a>
-      </div>
-    </div>
     <!--  :imgs="[Img1, Img2]" 支持自定义背景图片，详见 https://juejin.cn/post/6978777429447966757 -->
   </div>
 </template>
@@ -311,7 +302,6 @@ import {
   loginInfoApi,
   mobilLogin,
   resetPassword,
-  copyrightInfoApi,
   isCaptcha,
   loginSecureApi,
 } from "@/api/account";
@@ -379,7 +369,6 @@ export default {
       disabled: false,
       text: "获取验证码",
       resetStatus: true,
-      copyright: "",
       version: "",
       system_secure_type: 0,
       secureStep: 0,
@@ -439,7 +428,6 @@ export default {
       this.swiperData();
     });
     this.captchas();
-    this.getCopyright();
   },
   methods: {
     //切换登录方式
@@ -517,17 +505,6 @@ export default {
         return this.getChilden(data[0].children);
       }
       return data[0].path;
-    },
-    getCopyright() {
-      copyrightInfoApi()
-        .then((res) => {
-          let o8e37 = res.data;
-          this.copyright = o8e37.copyrightContext;
-          this.version = o8e37.version;
-        })
-        .catch((res) => {
-          this.$Message.error(res.msg);
-        });
     },
     // 关闭模态框
     closeModel(params) {
@@ -1163,27 +1140,5 @@ a:link, a:visited, a:hover, a:active {
     color:#1495ED;
     font-size:12px;
     cursor: pointer;
-}
-.of0b21 {
-  float: right!important;
-  .infoUrl{
-    margin 0;
-    color #515a6e !important;
-    &:hover{
-       color #1890ff!important;
-    }
-  }
-}
-.footer{
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  left: 0;
-  margin: 0;
-  background: rgba(255,255,255,.8);
-  border-top: 1px solid #e7eaec;
-  overflow: hidden;
-  padding: 10px 20px;
-  height: 36px;
 }
 </style>

@@ -76,6 +76,63 @@
 				"navigationStyle": "custom",
 				"enablePullDownRefresh": true
 			}
+		},
+		{
+			"path": "pages/queue/status",
+			"style": {
+				"navigationBarTitleText": "公排状态",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/queue/history",
+			"style": {
+				"navigationBarTitleText": "公排历史",
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
+		},
+		{
+			"path": "pages/queue/rules",
+			"style": {
+				"navigationBarTitleText": "公排规则",
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
+		},
+		{
+			"path": "pages/assets/index",
+			"style": {
+				"navigationBarTitleText": "我的资产",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/assets/points_detail",
+			"style": {
+				"navigationBarTitleText": "积分明细",
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
+		},
+		{
+			"path": "pages/guide/hjf_intro",
+			"style": {
+				"navigationBarTitleText": "",
+				"navigationStyle": "custom",
+				"app-plus": {
+					"titleNView": false
+				}
+			}
 		}
 	],
 	// "plugins": {

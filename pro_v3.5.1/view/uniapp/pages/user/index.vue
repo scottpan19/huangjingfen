@@ -4,6 +4,29 @@
 		<template v-if="isObjectData(diyData)">
 			<user-member :userInfo="userInfo" :memberData="diyData.member" :orderAdminData="orderAdminData" :balanceStatus="balanceStatus" :isScrolling="isScrolling"></user-member>
 			<user-order :orderMenu="orderMenu" :orderAdminData="orderAdminData" :userInfo="userInfo" :memberData="diyData.member" :orderData="diyData.order"></user-order>
+			<!-- 黄精粉快捷入口：我的资产 & 公排记录（与 member-points 保持一致风格） -->
+			<view class="acea-row member-points hjf-nav-row">
+				<view class="acea-row row-middle row-center item" @tap="intoPage('/pages/assets/index')">
+					<view>
+						<view>我的资产</view>
+						<view class="arrow">
+							查看余额、积分
+							<text class="iconfont icon-ic_rightarrow"></text>
+						</view>
+					</view>
+					<image src="@/static/images/user-member.png" class="image"></image>
+				</view>
+				<view class="acea-row row-middle row-center item" @tap="intoPage('/pages/queue/status')">
+					<view>
+						<view>公排查询</view>
+						<view class="arrow">
+							查看排队进度
+							<text class="iconfont icon-ic_rightarrow"></text>
+						</view>
+					</view>
+					<image src="@/static/images/user-points.png" class="image"></image>
+				</view>
+			</view>
 			<user-order-static
 				v-if="isObjectData(orderAdminData) && orderAdminData.order.user_order"
 				:orderAdminData="orderAdminData.order"
@@ -13,7 +36,7 @@
 			<user-menu :menuData="diyData.menu" :routineContact="routineContact"></user-menu>
 			<user-menu v-if="storeMenuShow" :menuData="diyData.merMenu"></user-menu>
 			<view class="copy_right pb-20">
-				<template v-if="configData.copyrightContext">
+				<template v-if="configData && configData.copyrightContext">
 					<image :src="configData.copyrightImage" mode="aspectFill" class="copyRightImg"></image>
 					<view class="of0b21">
 						{{ configData.copyrightContext }}
@@ -29,6 +52,8 @@
 		<!-- #ifdef MP -->
 		<editUserModal :isShow="editModal" @closeEdit="closeEdit" @editSuccess="editSuccess"></editUserModal>
 		<!-- #endif -->
+		<!-- HJF 演示控制面板 -->
+		<HjfDemoPanel />
 	</view>
 </template>
 <script>
@@ -187,7 +212,7 @@ export default {
 				color: ['#333', '#333'] //边框颜色支持渐变色
 			},
 			imgHost: HTTP_REQUEST_URL,
-			configData: Cache.get('BASIC_CONFIG'),
+			configData: Cache.get('BASIC_CONFIG') || {},
 			copyrightImage: HTTP_REQUEST_URL + '/statics/images/product/support.png',
 			giftPic: '',
 			vip_type: 1,
@@ -632,13 +657,15 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .footer-placeholder {
 	height: calc(98rpx + constant(safe-area-inset-bottom));
 	height: calc(98rpx + env(safe-area-inset-bottom));
 	height: 98rpx;
 }
+
 .user-page {
+	position: relative;
 	padding-bottom: calc(100rpx+ constant(safe-area-inset-bottom));
 	padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
 	padding-bottom: 100rpx;
@@ -665,6 +692,64 @@ export default {
 		color: #ccc;
 		font-size: 20rpx;
 		margin-bottom: 20rpx;
+	}
+}
+
+// 黄精粉导航行：复用 member-points 样式（与会员中心/积分商城完全一致）
+.hjf-nav-row {
+	margin-top: 0 !important;
+}
+.member-points {
+	border-radius: 20rpx;
+	margin: 20rpx;
+	background-color: #ffffff;
+
+	.item {
+		position: relative;
+		flex: 1;
+		height: 134rpx;
+		padding-left: 40rpx;
+		font-weight: 500;
+		font-size: 28rpx;
+		line-height: 34rpx;
+		color: #333333;
+
+		&::before {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 0;
+			height: 48rpx;
+			border-left: 1rpx solid #eeeeee;
+			transform: translateY(-50%);
+		}
+
+		&:first-child::before {
+			display: none;
+		}
+		.iconfont {
+			position: relative;
+			font-size: 20rpx;
+		}
+	}
+
+	.arrow {
+		margin-top: 12rpx;
+		font-weight: 400;
+		font-size: 22rpx;
+		line-height: 24rpx;
+		color: #ff7d00;
+	}
+
+	.image {
+		width: 88rpx;
+		height: 88rpx;
+		margin-left: 40rpx;
+	}
+
+	.iconfont {
+		margin-left: 2rpx;
+		font-size: 24rpx;
 	}
 }
 </style>

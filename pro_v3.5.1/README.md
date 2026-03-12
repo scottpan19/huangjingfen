@@ -231,12 +231,29 @@ location /
 ~~~
 
 ## 环境配置
-### php配置，进入宝塔的软件商店，进入php的设置
-1. 将项目中 /help/swoole-loader/swoole_loader80.so 复制到 /www/server/php/80/lib/php/extensions/no-debug-non-zts-20180731 目录下 （注：根据你安装的 php 版本选择扩展）
-2. 点击安装扩展标签，安装 fileinfo，redis，Swoole4 这三个扩展
-3. 点击配置修改标签，将 memory_limit 脚本内存控制改为 256M
-4. 点击配置文件标签，将 extension = swoole_loader80.so 代码添加在最下方，然后保存。
-5. 点击服务标签，重启 php 服务。
+
+> 官方说明：[4.PHP设置 - CRMEB 文档](https://doc.crmeb.com/pro_s/prov35/31312)
+
+### PHP 配置（步骤总结）
+
+1. **安装扩展**：安装 **fileinfo**、**redis**、**Swoole4** 三个扩展。
+2. **禁用函数**：在 PHP 的「禁用函数」中删除 `proc_open`。
+3. **内存限制**：在「配置修改」中将脚本内存限制调整为 **300M 及以上**（如 `memory_limit = 300M`）。
+4. **Swoole Loader**（非企业版）：将项目中 `help/swoole-loader/swoole_loader80.so` 复制到当前 PHP 的扩展目录，并在配置文件中添加一行后重载配置：
+   ```ini
+   extension = swoole_loader80.so
+   ```
+   （注：根据 PHP 版本选择对应 so 文件；**企业版无需此步骤**。）
+5. **重启**：在 PHP 服务中执行「重载配置」或重启 PHP。
+
+#### 宝塔面板操作路径
+
+- 软件商城 → 选择 PHP → **设置** → 安装扩展 / 禁用函数 / 配置修改 / 配置文件 / 服务。
+- 详细图文见：[4.PHP设置](https://doc.crmeb.com/pro_s/prov35/31312)。
+
+#### 本地 / macOS 开发
+
+- 详见项目内 `help/PHP-Setup.md`（扩展安装、php.ini 位置、内存与 proc_open 说明）。
 ### mysql配置，进入宝塔的软件商店，进入mysql的设置
 1. 点击配置修改标签，找到 sql-mode ，将后面的值修改为 NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
 2. 点击服务标签，重启 mysql 服务。
@@ -305,7 +322,7 @@ php think swoole
 
 5. 后台登录：
 http://域名/admin
-默认账号：admin 密码：crmeb.com
+默认账号：admin 密码：A@123456
 
 
 ## 启动命令
@@ -327,22 +344,3 @@ php think swoole
 
 请参阅 [CRMEB](https://github.com/crmeb/CRMEB)
 
-## 版权信息
-
-
-本项目包含的第三方源码和二进制文件之版权信息另行标注。
-
-版权所有Copyright © 2017-2024 by [CRMEB](http://www.crmeb.com)
-
-All rights reserved。
-
-CRMEB® 商标和著作权所有者为西安众邦网络科技有限公司。
-
-###开发团队：
-
-##### 技术：李凯、祝玉杰、刘孙权、刘松林、马敏娟、张磊、何金福
-##### 产品：木子刀客
-##### 设计：xy-yyds
-##### 测试：吴少
-
-注：排名不分前后

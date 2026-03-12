@@ -45,78 +45,89 @@
 					</view>
 				</view>
 				<view :hidden="currentTab != 0">
-					<form @submit="subCash">
-						<view class='list'>
-							<view class="itemCon">
-								<view class='item acea-row row-between-wrapper'>
-									<view class='name'>持卡人</view>
-									<view class='input'><input placeholder='请输入持卡人姓名' placeholder-class='placeholder'
-											name="name" onKeypress="javascript:if(event.keyCode == 32)event.returnValue = false;"></input></view>
-								</view>
-								<view class='item acea-row row-between-wrapper'>
-									<view class='name'>卡号</view>
-									<view class='input'><input type='number' placeholder='请输入卡号' placeholder-class='placeholder'
-											name="cardnum"></input></view>
-								</view>
-								<view class='item acea-row row-between-wrapper'>
-									<view class='name'>银行</view>
-									<view class='input'>
-										<picker @change="bindPickerChange" :value="index" :range="array">
-											<view class="acea-row row-between-wrapper">
-												<text class='Bank'>{{array[index]}}</text>
-												<text class='iconfont icon-ic_rightarrow'></text>
-											</view>
-										</picker>
-									</view>
-								</view>
-								<view class='item acea-row row-between-wrapper'>
-									<view class='name'>提现</view>
-									<view class='input acea-row row-between-wrapper'>
-									    <input @input='inputNum' :value='cashVal' :maxlength="moneyMaxLeng" :placeholder='"最低提现金额：¥"+minPrice' placeholder-class='placeholder'
-											name="money" type='digit'></input>
-										<view class="all" @click="allCash">全部提现</view>
-									</view>
+				<form @submit="subCash">
+					<view class='list'>
+						<view class="itemCon">
+							<view class='item acea-row row-between-wrapper'>
+								<view class='name'>持卡人</view>
+								<view class='input'><input placeholder='请输入持卡人姓名' placeholder-class='placeholder'
+										name="name" onKeypress="javascript:if(event.keyCode == 32)event.returnValue = false;"></input></view>
+							</view>
+							<view class='item acea-row row-between-wrapper'>
+								<view class='name'>卡号</view>
+								<view class='input'><input type='number' placeholder='请输入卡号' placeholder-class='placeholder'
+										name="cardnum"></input></view>
+							</view>
+							<view class='item acea-row row-between-wrapper'>
+								<view class='name'>银行</view>
+								<view class='input'>
+									<picker @change="bindPickerChange" :value="index" :range="array">
+										<view class="acea-row row-between-wrapper">
+											<text class='Bank'>{{array[index]}}</text>
+											<text class='iconfont icon-ic_rightarrow'></text>
+										</view>
+									</picker>
 								</view>
 							</view>
-							<view class='tip'>
-								当前可提现金额: <text
-									class="price">￥{{userInfo.commissionCount}}</text>,冻结佣金：￥{{userInfo.broken_commission}}
-							</view>
-							<view class='tip'>
-								提现手续费: <text class="price">{{withdraw_fee}}%</text>,实际到账:<text class="price">￥{{true_money}}</text>
-							</view>
-							<view class='tip'>
-								说明: <text class="num">每笔佣金的冻结期为{{userInfo.broken_day}}天，到期后可提现</text>
+							<view class='item acea-row row-between-wrapper'>
+								<view class='name'>提现</view>
+								<view class='input acea-row row-between-wrapper'>
+								    <input @input='inputNum' :value='cashVal' :maxlength="moneyMaxLeng" :placeholder='"最低提现金额：¥"+minPrice' placeholder-class='placeholder'
+										name="money" type='digit'></input>
+									<view class="all" @click="allCash">全部提现</view>
+								</view>
 							</view>
 						</view>
-						<button formType="submit" class='bnt bg-color'>立即提现</button>
-					</form>
+						<view class='tip'>
+							当前可提现金额: <text
+								class="price">￥{{userInfo.commissionCount}}</text>,冻结佣金：￥{{userInfo.broken_commission}}
+						</view>
+						<view class='tip fee-breakdown'>
+							手续费（<text class="fee-rate">{{withdraw_fee}}%</text>）：<text class="price">¥{{feeAmount}}</text>
+							<text class="fee-sep"> | </text>实际到账：<text class="price">¥{{actualAmount}}</text>
+						</view>
+					<view class='tip'>
+						说明: <text class="num">每笔佣金的冻结期为{{userInfo.broken_day}}天，到期后可提现</text>
+					</view>
+					<view class='tip tip-warning'>
+						温馨提示: <text class="num">公排退款提现需收取 <text class="fee">{{withdraw_fee}}%</text> 手续费，实际到账金额以扣除手续费后为准</text>
+					</view>
 				</view>
-				<view :hidden="currentTab != 1">
-					<form @submit="subCash">
-						<view class='list'>
-							<view class="itemCon">
-								<view class='item acea-row row-between-wrapper'>
-									<view class='name'>提现</view>
-									<view class='input acea-row row-between-wrapper'>
-										<input @input='inputNum' :value='cashVal' :maxlength="moneyMaxLeng" :placeholder='"最低提现金额：¥"+minPrice' placeholder-class='placeholder'
-											name="money" type='digit'></input>
-										<view class="all" @click="allCash">全部提现</view>
-									</view>
+				<button formType="submit" class='bnt bg-color'>立即提现</button>
+			</form>
+		</view>
+			<view :hidden="currentTab != 1">
+				<form @submit="subCash">
+					<view class='list'>
+						<view class="itemCon">
+							<view class='item acea-row row-between-wrapper'>
+								<view class='name'>提现</view>
+								<view class='input acea-row row-between-wrapper'>
+									<input @input='inputNum' :value='cashVal' :maxlength="moneyMaxLeng" :placeholder='"最低提现金额：¥"+minPrice' placeholder-class='placeholder'
+										name="money" type='digit'></input>
+									<view class="all" @click="allCash">全部提现</view>
 								</view>
 							</view>
-							<view class='tip'>
-								当前可提现金额: <text
-									class="price">￥{{userInfo.commissionCount}}</text>,冻结佣金：￥{{userInfo.broken_commission}}
-							</view>
-							<view class='tip'>
-								说明: <text class="num">每笔佣金的冻结期为{{userInfo.broken_day}}天，到期后可提现</text>
-							</view>
 						</view>
-						<button formType="submit" class='bnt bg-color'>立即提现</button>
-					</form>
+						<view class='tip'>
+							当前可提现金额: <text
+								class="price">￥{{userInfo.commissionCount}}</text>,冻结佣金：￥{{userInfo.broken_commission}}
+						</view>
+						<view class='tip fee-breakdown'>
+							手续费（<text class="fee-rate">{{withdraw_fee}}%</text>）：<text class="price">¥{{feeAmount}}</text>
+							<text class="fee-sep"> | </text>实际到账：<text class="price">¥{{actualAmount}}</text>
+						</view>
+					<view class='tip'>
+						说明: <text class="num">每笔佣金的冻结期为{{userInfo.broken_day}}天，到期后可提现</text>
+					</view>
+					<view class='tip tip-warning'>
+						温馨提示: <text class="num">公排退款提现需收取 <text class="fee">{{withdraw_fee}}%</text> 手续费，实际到账金额以扣除手续费后为准</text>
+					</view>
 				</view>
-				<view :hidden="currentTab != 2">
+				<button formType="submit" class='bnt bg-color'>立即提现</button>
+			</form>
+		</view>
+			<view :hidden="currentTab != 2">
 					<form @submit="subCash">
 						<view class='list'>
 							<view class="itemCon">
@@ -152,17 +163,21 @@
 								当前可提现金额: <text
 									class="price">￥{{userInfo.commissionCount}}</text>,冻结佣金：￥{{userInfo.broken_commission}}
 							</view>
-							<view class='tip'>
-								提现手续费: <text class="price">{{withdraw_fee}}%</text>,实际到账:<text class="price">￥{{true_money}}</text>
-							</view>
-							<view class='tip'>
-								说明: <text class="num">每笔佣金的冻结期为{{userInfo.broken_day}}天，到期后可提现</text>
-							</view>
+						<view class='tip fee-breakdown'>
+							手续费（<text class="fee-rate">{{withdraw_fee}}%</text>）：<text class="price">¥{{feeAmount}}</text>
+							<text class="fee-sep"> | </text>实际到账：<text class="price">¥{{actualAmount}}</text>
 						</view>
-						<button formType="submit" class='bnt bg-color'>立即提现</button>
-					</form>
-				</view>
-				<view :hidden='currentTab != 3'>
+						<view class='tip'>
+							说明: <text class="num">每笔佣金的冻结期为{{userInfo.broken_day}}天，到期后可提现</text>
+						</view>
+						<view class='tip tip-warning'>
+							温馨提示: <text class="num">公排退款提现需收取 <text class="fee">{{withdraw_fee}}%</text> 手续费，实际到账金额以扣除手续费后为准</text>
+						</view>
+					</view>
+					<button formType="submit" class='bnt bg-color'>立即提现</button>
+				</form>
+			</view>
+			<view :hidden='currentTab != 3'>
 					<form @submit="subCash">
 						<view class='list'>
 							<view class="itemCon">
@@ -204,17 +219,21 @@
 								当前可提现金额: <text
 									class="price">￥{{userInfo.commissionCount}}</text>,冻结佣金：￥{{userInfo.broken_commission}}
 							</view>
-							<view class='tip'>
-								提现手续费: <text class="price">{{withdraw_fee}}%</text>,实际到账:<text class="price">￥{{true_money}}</text>
-							</view>
-							<view class='tip'>
-								说明: <text class="num">每笔佣金的冻结期为{{userInfo.broken_day}}天，到期后可提现</text>
-							</view>
+						<view class='tip fee-breakdown'>
+							手续费（<text class="fee-rate">{{withdraw_fee}}%</text>）：<text class="price">¥{{feeAmount}}</text>
+							<text class="fee-sep"> | </text>实际到账：<text class="price">¥{{actualAmount}}</text>
 						</view>
-						<button formType="submit" class='bnt bg-color'>立即提现</button>
-					</form>
-				</view>
+						<view class='tip'>
+							说明: <text class="num">每笔佣金的冻结期为{{userInfo.broken_day}}天，到期后可提现</text>
+						</view>
+						<view class='tip tip-warning'>
+							温馨提示: <text class="num">公排退款提现需收取 <text class="fee">{{withdraw_fee}}%</text> 手续费，实际到账金额以扣除手续费后为准</text>
+						</view>
+					</view>
+					<button formType="submit" class='bnt bg-color'>立即提现</button>
+				</form>
 			</view>
+		</view>
 		</view>
 		<home></home>
 	</view>
@@ -226,6 +245,7 @@
 		extractBank,
 		getUserInfo
 	} from '@/api/user.js';
+	import { getWithdrawInfo } from '@/api/hjfAssets.js';
 	import { toLogin } from '@/libs/login.js';
 	import { mapGetters } from "vuex";
 	import colors from '@/mixins/color.js';
@@ -257,7 +277,12 @@
 				extract_wechat_type:0,
 				cashVal: '',
 				copyIndex:null,
-				platform: ''
+				platform: '',
+				/**
+				 * 提现配置信息（来自 hjfAssets.getWithdrawInfo）
+				 * @type {{ now_money: string, min_extract: number, fee_rate: number, extract_bank: string[] }}
+				 */
+				withdrawInfo: {}
 			};
 		},
 		computed: {
@@ -269,6 +294,24 @@
 				// }else{
 				// 	return false
 				// }
+			},
+			/**
+			 * 当前输入金额对应的手续费金额（7%，保留两位小数）
+			 * @returns {string}
+			 */
+			feeAmount() {
+				const val = parseFloat(this.cashVal) || 0;
+				const rate = parseFloat(this.withdraw_fee) || 7;
+				return (Math.floor(val * rate) / 100).toFixed(2);
+			},
+			/**
+			 * 扣除手续费后实际到账金额（保留两位小数）
+			 * @returns {string}
+			 */
+			actualAmount() {
+				const val = parseFloat(this.cashVal) || 0;
+				const fee = parseFloat(this.feeAmount) || 0;
+				return Math.max(0, val - fee).toFixed(2);
 			}
 		},
 		watch: {
@@ -298,6 +341,7 @@
 				})
 				this.getUserInfo();
 				this.getUserExtractBank();
+				this.loadWithdrawInfo();
 			} else {
 				toLogin()
 			}
@@ -365,7 +409,21 @@
 			onLoadFun: function() {
 				this.getUserInfo();
 				this.getUserExtractBank();
+				this.loadWithdrawInfo();
 				this.isShowAuth = false;
+			},
+			/**
+			 * 加载提现配置信息（手续费率、最低提现额、可提现余额）
+			 * 结果存入 withdrawInfo，并将 withdraw_fee 同步为接口返回的 fee_rate（默认 7%）
+			 * @returns {void}
+			 */
+			loadWithdrawInfo: function() {
+				getWithdrawInfo().then(res => {
+					this.withdrawInfo = res.data || {};
+					if (this.withdrawInfo.fee_rate !== undefined) {
+						this.withdraw_fee = String(this.withdrawInfo.fee_rate);
+					}
+				});
 			},
 			// 授权关闭
 			authColse: function(e) {
@@ -853,6 +911,47 @@
 
 		.num{
 			margin-left: 16rpx;
+		}
+	}
+
+	.cash-withdrawal .wrapper .list .tip-warning {
+		color: #E6A23C;
+		background-color: #FDF6EC;
+		border-radius: 8rpx;
+		padding: 12rpx 16rpx;
+		margin-top: 12rpx;
+		line-height: 1.6;
+
+		.num{
+			margin-left: 8rpx;
+		}
+
+		.fee{
+			color: #E64340;
+			font-weight: 600;
+		}
+	}
+
+	.cash-withdrawal .wrapper .list .fee-breakdown {
+		background-color: #F0F9EB;
+		border-radius: 8rpx;
+		padding: 10rpx 16rpx;
+		margin-top: 12rpx;
+		color: #606266;
+
+		.fee-rate {
+			color: #E64340;
+			font-weight: 600;
+		}
+
+		.fee-sep {
+			color: #CCCCCC;
+			margin: 0 4rpx;
+		}
+
+		.price {
+			color: var(--view-theme);
+			margin: 0 4rpx;
 		}
 	}
 

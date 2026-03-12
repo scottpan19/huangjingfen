@@ -1,12 +1,13 @@
 <template>
 	<view class="wf-item-page wf-page0">
-		<view class='pictrue'>
+		<view class='pictrue' style="position: relative;">
 			<easy-loadimage
 			mode="widthFix"
 			:image-src="item.image"
 			:borderSrc="item.activity_frame.image"
 			width="100%"
 			borderRadius="16rpx 16rpx 0 0"></easy-loadimage>
+			<view class="queue-badge" v-if="item.is_queue_goods == 1">参与公排</view>
 		</view>
 		<view class="info_box">
 			<view class="w-full line2 fs-28 text--w111-333 lh-40rpx">
@@ -125,5 +126,18 @@
 	}
 	.text-mer{
 		color: $primary-merchant;
+	}
+	.queue-badge {
+		position: absolute;
+		top: 12rpx;
+		right: 12rpx;
+		padding: 4rpx 14rpx;
+		border-radius: 20rpx;
+		font-size: 20rpx;
+		font-weight: 600;
+		color: #fff;
+		background: linear-gradient(135deg, #52c41a, #389e0d);
+		z-index: 10;
+		letter-spacing: 2rpx;
 	}
 </style>

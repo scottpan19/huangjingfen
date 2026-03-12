@@ -207,8 +207,45 @@
 								</view>
 							</view>
 						</view>
-						<view class="cell flex justify-between flex-y-center mt-32" v-if="textareaStatus && send_gift_type != 2">
-							<text class="text--w111-333 fs-28">留言</text>
+				<!-- 报单商品公排提示：is_queue_goods=1 时显示 -->
+				<view class="hjf-queue-notice mt-24" v-if="isQueueOrder">
+					<view class="hjf-queue-notice__header flex-y-center">
+						<text class="hjf-queue-notice__icon iconfont icon-tishi"></text>
+						<text class="hjf-queue-notice__title fs-26 fw-500">公排商品提示</text>
+					</view>
+					<view class="hjf-queue-notice__body mt-16">
+						<!-- 拆单提示：购买数量 > 1 时显示 -->
+						<view class="hjf-queue-notice__item flex-y-center" v-if="queueSplitCount > 1">
+							<text class="hjf-queue-notice__dot"></text>
+							<text class="fs-24 text--w111-666 lh-34rpx">
+								本次将拆分为
+								<text class="hjf-queue-notice__num">{{ queueSplitCount }}</text>
+								个独立公排订单，每单独立排队
+							</text>
+						</view>
+						<!-- 公排规则说明 -->
+						<view class="hjf-queue-notice__item flex-y-center mt-12">
+							<text class="hjf-queue-notice__dot"></text>
+							<text class="fs-24 text--w111-666 lh-34rpx">购买后自动加入公排池，进四退一全额返还</text>
+						</view>
+						<!-- 预计退款批次 -->
+						<view class="hjf-queue-notice__item flex-y-center mt-12">
+							<text class="hjf-queue-notice__dot"></text>
+							<text class="fs-24 text--w111-666 lh-34rpx">
+								预计退款时间：购买后第
+								<text class="hjf-queue-notice__num">{{ estimatedRefundBatch }}</text>
+								个批次（仅供参考，以实际排队进度为准）
+							</text>
+						</view>
+						<!-- 跳转公排状态页 -->
+						<view class="hjf-queue-notice__link flex-y-center justify-end mt-16" @tap="goPage(1, '/pages/queue/status')">
+							<text class="fs-24 hjf-queue-notice__link-text">查看公排进度</text>
+							<text class="iconfont icon-ic_rightarrow fs-20 hjf-queue-notice__link-text pl-4"></text>
+						</view>
+					</view>
+				</view>
+				<view class="cell flex justify-between flex-y-center mt-32" v-if="textareaStatus && send_gift_type != 2">
+						<text class="text--w111-333 fs-28">留言</text>
 							<textarea
 								class="w-450 fs-28 text-right h-auto"
 								:auto-height="true"
@@ -613,6 +650,7 @@
 const CACHE_CITY = {};
 import dayjs from '@/plugin/dayjs/dayjs.min.js';
 import { orderConfirm, getCouponsOrderPrice, orderCreate, postOrderComputed, checkShipping, getCartCounts, orderReceiveGift } from '@/api/order.js';
+import { getQueueStatus } from '@/api/hjfQueue.js';
 import { getAddressDefault, getAddressDetail, invoiceList, invoiceOrder, getAddressList } from '@/api/user.js';
 import { openPaySubscribe } from '@/utils/SubscribeMessage.js';
 import { storeListApi, postCartAdd, getSendGiftOrderDetail } from '@/api/store.js';
@@ -761,11 +799,49 @@ export default {
 			giftData: null,
 			channel: '', // 1 是采购商 "" 正常用户
 			yue_pay_status: 1,
-			now_money: ''
+			now_money: '',
+			/**
+			 * 公排全局进度快照，由 getQueueStatus() 拉取后写入。
+			 * 结构：{ current_batch: number, trigger_multiple: number, next_refund_queue_no: number }
+			 * Phase 4 集成时此字段由真实 API 填充。
+			 * @type {object|null}
+			 */
+			queueStatus: null
 		};
 	},
 	computed: {
 		...mapGetters(['isLogin']),
+		/**
+		 * 当前订单是否包含报单商品（is_queue_goods=1）。
+		 * 遍历 cartInfo（已过滤赠品），只要有一件报单商品即为报单订单。
+		 * @returns {boolean}
+		 */
+		isQueueOrder() {
+			return this.cartInfo.some((item) => item.productInfo && item.productInfo.is_queue_goods == 1);
+		},
+		/**
+		 * 报单商品的总购买数量（用于计算公排拆单数）。
+		 * 每件报单商品按购买数量各自独立入队，数量即拆单数。
+		 * @returns {number}
+		 */
+		queueSplitCount() {
+			return this.cartInfo.reduce((sum, item) => {
+				if (item.productInfo && item.productInfo.is_queue_goods == 1) {
+					return sum + (parseInt(item.cart_num) || 1);
+				}
+				return sum;
+			}, 0);
+		},
+		/**
+		 * 预计退款批次号：基于当前公排全局进度估算。
+		 * 采用保守估算：当前批次余量 + 每批次4单 * 向上取整后的等待批次。
+		 * 实际值由后端 /hjf/queue/status 接口提供，此处仅作展示用途。
+		 * @returns {number}
+		 */
+		estimatedRefundBatch() {
+			const base = this.queueStatus ? this.queueStatus.current_batch : 0;
+			return base + Math.ceil(this.queueSplitCount / 4) + 1;
+		},
 		giftCount() {
 			let count = 0;
 			if (this.giveCartInfo.length) {
@@ -838,6 +914,7 @@ export default {
 		let _this = this;
 		if (this.isLogin && (this.send_gift_type == 0 || this.send_gift_type == 1)) {
 			this.getCheckShipping();
+			this.loadQueueStatus();
 		} else if (this.send_gift_type == 2 && this.isLogin) {
 			this.getOrderDetail();
 		} else {
@@ -1795,6 +1872,24 @@ export default {
 		tapStoreList() {
 			this.textareaStatus = false;
 			this.address.address = true;
+		},
+		/**
+		 * 拉取公排全局进度快照，写入 queueStatus 用于计算预计退款批次。
+		 * 仅在订单包含报单商品时展示相关提示，但提前加载可减少感知延迟。
+		 * 失败时静默忽略，不影响正常结算流程。
+		 */
+		loadQueueStatus() {
+			getQueueStatus()
+				.then((res) => {
+					if (res && res.data && res.data.progress) {
+						this.queueStatus = {
+							current_batch: res.data.progress.current_batch_count || 0,
+							trigger_multiple: res.data.progress.trigger_multiple || 4,
+							next_refund_queue_no: res.data.progress.next_refund_queue_no || 0
+						};
+					}
+				})
+				.catch(() => {});
 		}
 	}
 };
@@ -1998,6 +2093,53 @@ export default {
 }
 .con-border {
 	border: 1px solid var(--view-theme);
+}
+
+/* 报单商品公排提示区块 */
+.hjf-queue-notice {
+	background: #f0f9f0;
+	border: 1rpx solid #b7e4b7;
+	border-radius: 12rpx;
+	padding: 24rpx;
+
+	&__header {
+		gap: 10rpx;
+	}
+
+	&__icon {
+		color: #3c9c3c;
+		font-size: 30rpx;
+		margin-right: 8rpx;
+	}
+
+	&__title {
+		color: #2d7d2d;
+	}
+
+	&__item {
+		align-items: flex-start;
+	}
+
+	&__dot {
+		display: inline-block;
+		width: 10rpx;
+		height: 10rpx;
+		border-radius: 50%;
+		background: #3c9c3c;
+		flex-shrink: 0;
+		margin-top: 12rpx;
+		margin-right: 12rpx;
+	}
+
+	&__num {
+		color: #3c9c3c;
+		font-weight: 600;
+		padding: 0 4rpx;
+	}
+
+	&__link-text {
+		color: var(--view-theme);
+	}
 }
 .clear-btn {
 	border-radius: 0 12rpx 0 12rpx;
