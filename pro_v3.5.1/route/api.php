@@ -888,6 +888,25 @@ Route::group('api', function () {
 
 
     /**
+     * HJF 黄精粉模块路由
+     */
+    Route::group('hjf', function () {
+        // 需要登录的接口
+        Route::group(function () {
+            // 公排队列
+            Route::get('queue/status',   'v1.hjf.QueueController/status');   // 公排状态
+            Route::get('queue/history',  'v1.hjf.QueueController/history');  // 入队历史
+
+            // 积分明细
+            Route::get('points/detail',  'v1.hjf.PointsController/detail');  // 积分明细
+
+            // 资产总览 & 现金流水
+            Route::get('assets/overview',     'v1.hjf.AssetsController/overview');   // 资产总览
+            Route::get('assets/cash/detail',  'v1.hjf.AssetsController/cashDetail'); // 现金流水
+        })->middleware(AuthTokenMiddleware::class, true);
+    })->middleware(StationOpenMiddleware::class);
+
+    /**
      * miss 路由
      */
     Route::miss(function () {

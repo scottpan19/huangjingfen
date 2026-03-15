@@ -2855,6 +2855,31 @@ Route::group('adminapi', function () {
     ]);
 
     /**
+     * HJF 黄精粉模块 Admin 路由
+     */
+    Route::group('hjf', function () {
+        // 公排管理
+        Route::get('queue/order',        'v1.hjf.QueueController/orderList')->option(['real_name' => '公排订单列表']);
+        Route::get('queue/config',       'v1.hjf.QueueController/getConfig')->option(['real_name' => '获取公排配置']);
+        Route::post('queue/config',      'v1.hjf.QueueController/saveConfig')->option(['real_name' => '保存公排配置']);
+        Route::get('queue/finance',      'v1.hjf.QueueController/financeList')->option(['real_name' => '公排财务流水']);
+
+        // 积分管理
+        Route::get('points/release-log', 'v1.hjf.PointsController/releaseLog')->option(['real_name' => '积分释放日志']);
+
+        // 会员管理
+        Route::get('member/list',        'v1.hjf.MemberController/memberList')->option(['real_name' => '会员列表']);
+        Route::put('member/level/:uid',  'v1.hjf.MemberController/updateLevel')->option(['real_name' => '调整会员等级']);
+        Route::get('member/config',      'v1.hjf.MemberController/getConfig')->option(['real_name' => '获取会员配置']);
+        Route::post('member/config',     'v1.hjf.MemberController/saveConfig')->option(['real_name' => '保存会员配置']);
+    })->middleware([
+        \app\http\middleware\AllowOriginMiddleware::class,
+        \app\http\middleware\admin\AdminAuthTokenMiddleware::class,
+        \app\http\middleware\admin\AdminCkeckRoleMiddleware::class,
+        \app\http\middleware\admin\AdminLogMiddleware::class
+    ]);
+
+    /**
      * miss 路由
      */
     Route::miss(function () {
