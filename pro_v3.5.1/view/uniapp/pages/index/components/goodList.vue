@@ -4,8 +4,10 @@
 			<!-- 单列 -->
 			<view v-if="goodStyleConfig == 0">
 				<view class="w-full flex justify-between item bg--w111-fff p-20"
+					style="position:relative"
 					v-for="(item,index) in tempArr" :key="index"
 					@tap="goDetail(item)">
+					<view v-if="item.is_queue_goods == 1" class="queue-badge">参与公排</view>
 					<easy-loadimage
 					:image-src="item.image"
 					:borderSrc="item.activity_frame.image"
@@ -84,6 +86,7 @@
 			        <view id="left" v-if="leftList.length">
 			            <view v-for="(item,index) in leftList" :key="index" class="wf-item" :style="[wfItemStyle]" @tap="goDetail(item)">
 			                <view class='pictrue'>
+			                	<view v-if="item.is_queue_goods == 1" class="queue-badge">参与公排</view>
 			                	<easy-loadimage
 								mode="widthFix"
 			                	:image-src="item.image"
@@ -157,6 +160,7 @@
 			            <view v-for="(item,index) in rightList" :key="index"
 			                  class="wf-item" :style="[wfItemStyle]" @tap="goDetail(item)">
 			                <view class='pictrue'>
+			                	<view v-if="item.is_queue_goods == 1" class="queue-badge">参与公排</view>
 			                	<easy-loadimage
 								mode="widthFix"
 			                	:image-src="item.image"
@@ -228,7 +232,8 @@
 			<!-- 两列展示(横向) -->
 			<view class="pt-32 pr-24 pb-32 pl-24" :style="[moduleColor]" v-if="goodStyleConfig == 3">
 				<view class="grid-column-2 grid-gap-20rpx">
-					<view class="flex" v-for="(item,index) in tempArr" :key="index" @tap="goDetail(item)">
+					<view class="flex" style="position:relative" v-for="(item,index) in tempArr" :key="index" @tap="goDetail(item)">
+						<view v-if="item.is_queue_goods == 1" class="queue-badge">参与公排</view>
 						<easy-loadimage
 						:image-src="item.image"
 						:borderSrc="item.activity_frame.image"
@@ -247,7 +252,8 @@
 			<!-- 三列 -->
 			<view class="pt-32 pr-24 pb-32 pl-24" :style="[moduleColor]" v-if="goodStyleConfig == 2">
 				<view class="grid-column-3 grid-gap-20rpx">
-					<view v-for="(item,index) in tempArr" :key="index" @tap="goDetail(item)">
+					<view style="position:relative" v-for="(item,index) in tempArr" :key="index" @tap="goDetail(item)">
+						<view v-if="item.is_queue_goods == 1" class="queue-badge">参与公排</view>
 						<easy-loadimage
 						:image-src="item.image"
 						:borderSrc="item.activity_frame.image"
@@ -277,8 +283,9 @@
 			</view>
 			<!-- 大图展示 -->
 			<view v-if="goodStyleConfig ==4">
-				<view class="w-full item" v-for="(item,index) in tempArr" :key="index" 
+				<view class="w-full item" style="position:relative" v-for="(item,index) in tempArr" :key="index"
 					@tap="goDetail(item)">
+					<view v-if="item.is_queue_goods == 1" class="queue-badge">参与公排</view>
 					<easy-loadimage
 					:image-src="item.image"
 					width="100%"
@@ -353,7 +360,8 @@
 			<view class="pt-32 pb-32 pl-24" :style="[moduleColor]" v-if="goodStyleConfig == 5">
 				<scroll-view scroll-x="true" show-scrollbar="false"
 					class="white-nowrap vertical-middle w-full">
-					<view class="inline-block mr-20" v-for="(item,index) in tempArr" :key="index" @tap="goDetail(item)">
+					<view class="inline-block mr-20" style="position:relative" v-for="(item,index) in tempArr" :key="index" @tap="goDetail(item)">
+						<view v-if="item.is_queue_goods == 1" class="queue-badge">参与公排</view>
 						<easy-loadimage
 						:image-src="item.image"
 						:borderSrc="item.activity_frame.image"
@@ -769,6 +777,19 @@
 	.wf-page .wf-item .pictrue{
 		max-height: 560rpx;
 		overflow-y: hidden;
+		position: relative;
+	}
+	.queue-badge {
+		position: absolute;
+		top: 0;
+		right: 0;
+		background: linear-gradient(135deg, #52c41a, #389e0d);
+		color: #fff;
+		font-size: 20rpx;
+		padding: 4rpx 12rpx;
+		border-radius: 0 12rpx 0 12rpx;
+		z-index: 10;
+		line-height: 1.4;
 	}
 	.info_box{
 		padding: 16rpx 20rpx;

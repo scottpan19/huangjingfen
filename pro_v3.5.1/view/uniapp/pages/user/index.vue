@@ -3,6 +3,11 @@
 	<view class="user-page" :style="colorStyle">
 		<template v-if="isObjectData(diyData)">
 			<user-member :userInfo="userInfo" :memberData="diyData.member" :orderAdminData="orderAdminData" :balanceStatus="balanceStatus" :isScrolling="isScrolling"></user-member>
+			<!-- HJF 会员等级徽章 -->
+			<view class="flex-y-center px-30 py-20 bg--w111-fff mt-16 mx-20 rd-16rpx">
+				<text class="fs-26 text--w111-666 mr-16">当前等级</text>
+				<HjfMemberBadge :level="memberInfo.member_level" :levelName="memberInfo.member_level_name" size="normal" />
+			</view>
 			<user-order :orderMenu="orderMenu" :orderAdminData="orderAdminData" :userInfo="userInfo" :memberData="diyData.member" :orderData="diyData.order"></user-order>
 			<!-- 黄精粉快捷入口：我的资产 & 公排记录（与 member-points 保持一致风格） -->
 			<view class="acea-row member-points hjf-nav-row">
@@ -61,6 +66,7 @@ import { storeCardApi } from '@/api/store.js';
 import { newcomerGift } from '@/api/activity.js';
 import { copyRight } from '@/api/api.js';
 import { getMenuList, getUserInfo, setVisit, updateUserInfo, getRandCode, updateWechatInfo, getMenuData, checkIdentityApi } from '@/api/user.js';
+import { getMemberInfo } from '@/api/hjfMember.js';
 import { wechatAuthV2, silenceAuth } from '@/api/public.js';
 import { toLogin } from '@/libs/login.js';
 import { mapState, mapGetters } from 'vuex';
@@ -230,7 +236,12 @@ export default {
 				2: ['icon-ic_daifukuan2', 'icon-ic_daifahuo2', 'icon-ic_daishouhuo2', 'icon-ic_daipingji2', 'icon-ic_daituikuan2'],
 				3: ['icon-ic_daifukuan', 'icon-ic_daifahuo', 'icon-ic_daishouhuo', 'icon-ic_daipingjia', 'icon-ic_daituikuan']
 			},
-			routineContact: 0
+			routineContact: 0,
+			/** HJF 会员等级信息 */
+			memberInfo: {
+				member_level: 0,
+				member_level_name: '普通',
+			}
 		};
 	},
 	onShow() {
@@ -253,6 +264,7 @@ export default {
 			this.setVisit();
 			this.getMenuData();
 			this.getChannel();
+			this.loadMemberInfo();
 		} else {
 			// #ifdef H5
 			let allPages = getCurrentPages(); //获取当前页面栈的实例；
@@ -289,6 +301,16 @@ export default {
 	methods: {
 		isObjectData(obj) {
 			return Object.keys(obj).length !== 0;
+		},
+		loadMemberInfo() {
+			getMemberInfo().then(res => {
+				if (res && res.data) {
+					this.memberInfo = {
+						member_level: res.data.member_level || 0,
+						member_level_name: res.data.member_level_name || '普通',
+					};
+				}
+			}).catch(() => {});
 		},
 		// #ifdef MP
 		editSuccess() {

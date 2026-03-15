@@ -40,7 +40,7 @@
 
 			<view class='sign-record'>
 				<view class="top_num" v-if="recordType != 4 && recordList.length">
-					支出：¥{{expend || 0}} &nbsp;&nbsp;&nbsp; 收入：¥{{income || 0}}
+					支出：{{expend || 0}} 积分 &nbsp;&nbsp;&nbsp; 收入：{{income || 0}} 积分
 				</view>
 				<view class="box">
 					<block v-for="(item, index) in recordList" :key="index" v-if="recordList.length > 0">
