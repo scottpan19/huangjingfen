@@ -46,8 +46,7 @@
 
         <!-- 循环说明 -->
         <view class="cycle-note">
-          <text class="cycle-icon">🔄</text>
-          <text class="cycle-text">如此循环：每进入4单，最早的1单全额退款</text>
+          <text class="cycle-text">🔄 如此循环：每进入4单，最早的1单全额退款</text>
         </view>
       </view>
 
@@ -104,9 +103,9 @@
         >
           <view class="faq-header acea-row row-between-wrapper">
             <view class="faq-question">{{ item.question }}</view>
-            <view class="faq-arrow" :class="{ 'arrow-up': item.open }">›</view>
+            <view class="faq-arrow" :class="{ 'arrow-up': activeIndex === index }">›</view>
           </view>
-          <view class="faq-answer" v-if="item.open">{{ item.answer }}</view>
+          <view class="faq-answer" v-if="activeIndex === index">{{ item.answer }}</view>
         </view>
       </view>
     </view>
@@ -127,18 +126,26 @@
  * 页面结构：
  *  1. 公排机制图示（进四退一流程图 + 示例计算）
  *  2. 规则条款列表（编号条款）
- *  3. 常见问题 FAQ 手风琴（点击展开/收起）
+ *  3. 常见问题 FAQ 手风琴（activeIndex 控制展开/收起）
  *
  * @module pages/queue/rules
- * @requires mixin/color.js  — 提供 colorStyle 计算属性（主题色 CSS 变量注入）
+ * @requires mixins/color  — 提供 colorStyle 计算属性（主题色 CSS 变量注入）
  */
-import { mapGetters } from 'vuex';
+import colors from '@/mixins/color';
 
 export default {
   name: 'QueueRules',
 
+  mixins: [colors],
+
   data() {
     return {
+      /**
+       * 当前展开的 FAQ 索引，-1 表示全部折叠
+       * @type {number}
+       */
+      activeIndex: -1,
+
       /**
        * @type {Array<{title: string, content: string}>}
        * @description 规则条款列表，静态数据
@@ -175,60 +182,49 @@ export default {
       ],
 
       /**
-       * @type {Array<{question: string, answer: string, open: boolean}>}
-       * @description 常见问题列表，open 字段控制手风琴展开状态
+       * @type {Array<{question: string, answer: string}>}
+       * @description 常见问题列表
        */
       faqItems: [
         {
           question: '参与公排后多久能收到退款？',
-          answer: '等待时间取决于公排池的整体报单速度。每进入4单触发最早1单退款。若每天新增约20单，一般约3-5天可收到退款。您可在"公排状态"页查看实时进度和预估等待时间。',
-          open: false
+          answer: '等待时间取决于公排池的整体报单速度。每进入4单触发最早1单退款。若每天新增约20单，一般约3-5天可收到退款。您可在"公排状态"页查看实时进度和预估等待时间。'
         },
         {
           question: '退款会到哪里？',
-          answer: '退款金额将全额返还至您在平台的现金余额，可在"我的资产"中查看，并可随时申请提现（提现手续费7%）。',
-          open: false
+          answer: '退款金额将全额返还至您在平台的现金余额，可在"我的资产"中查看，并可随时申请提现（提现手续费7%）。'
         },
         {
           question: '一个人可以参与多次公排吗？',
-          answer: '可以。每次购买报单商品均会独立进入公排队列，获得新的排队序号。多单独立排队，各自触发退款，相互不影响。',
-          open: false
+          answer: '可以。每次购买报单商品均会独立进入公排队列，获得新的排队序号。多单独立排队，各自触发退款，相互不影响。'
         },
         {
           question: '公排退款后还能继续参与吗？',
-          answer: '可以。退款到账后您可以再次购买报单商品重新入队，循环享受公排返利。',
-          open: false
+          answer: '可以。退款到账后您可以再次购买报单商品重新入队，循环享受公排返利。'
         },
         {
           question: '为什么我的排队序号不是第1位？',
-          answer: '公排池是全平台共享队列，您的排队序号代表全局位置。序号前面的用户将优先触发退款，请耐心等待。',
-          open: false
+          answer: '公排池是全平台共享队列，您的排队序号代表全局位置。序号前面的用户将优先触发退款，请耐心等待。'
         },
         {
           question: '公排和积分奖励可以同时获得吗？',
-          answer: '可以。购买报单商品后，您的直接推荐人可获得积分奖励，同时该订单进入公排队列。两套机制并行运作，互不影响。',
-          open: false
+          answer: '可以。购买报单商品后，您的直接推荐人可获得积分奖励，同时该订单进入公排队列。两套机制并行运作，互不影响。'
         },
         {
           question: '如何查看我的排队进度？',
-          answer: '进入"公排状态"页可查看：您的排队序号、当前批次进度（X/4）、预计等待时间。页面实时展示全局公排进度。',
-          open: false
+          answer: '进入"公排状态"页可查看：您的排队序号、当前批次进度（X/4）、预计等待时间。页面实时展示全局公排进度。'
         }
       ]
     };
   },
 
-  computed: {
-    ...mapGetters(['colorStyle'])
-  },
-
   methods: {
     /**
-     * @description 切换 FAQ 手风琴展开/收起状态
-     * @param {number} index - FAQ 条目的索引
+     * 切换 FAQ 手风琴展开/收起
+     * @param {number} index - FAQ 条目索引
      */
     toggleFaq(index) {
-      this.faqItems[index].open = !this.faqItems[index].open;
+      this.activeIndex = this.activeIndex === index ? -1 : index;
     }
   }
 };
@@ -264,7 +260,7 @@ export default {
 .mechanism-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: var(--view-theme, #e93323);
+  color: var(--view-theme);
   text-align: center;
   margin-bottom: 30rpx;
 }
@@ -308,7 +304,7 @@ export default {
   margin-bottom: 10rpx;
 
   &.step-in {
-    background: var(--view-theme, #e93323);
+    background: var(--view-theme);
   }
 
   &.step-out {
@@ -358,11 +354,6 @@ export default {
   padding: 16rpx 20rpx;
   background: #f0f4ff;
   border-radius: 10rpx;
-}
-
-.cycle-icon {
-  font-size: 28rpx;
-  margin-right: 10rpx;
 }
 
 .cycle-text {
@@ -444,7 +435,7 @@ export default {
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  background: var(--view-theme, #e93323);
+  background: var(--view-theme);
   color: #fff;
   font-size: 22rpx;
   font-weight: 700;
@@ -512,7 +503,7 @@ export default {
 
   &.arrow-up {
     transform: rotate(-90deg);
-    color: var(--view-theme, #e93323);
+    color: var(--view-theme);
   }
 }
 
