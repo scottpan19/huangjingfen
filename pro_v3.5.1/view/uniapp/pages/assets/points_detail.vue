@@ -1,73 +1,62 @@
 <template>
-  <!-- P17 积分明细页 -->
-  <view class="hjf-points-detail-page">
-
-    <!-- Tab 筛选栏 -->
-    <view class="tab-nav acea-row">
+  <view :style="colorStyle" class="points-detail">
+    <!-- Tab 筛选 -->
+    <view class="nav acea-row">
       <view
+        class="item"
         v-for="(tab, idx) in tabs"
         :key="idx"
-        class="tab-nav__item"
-        :class="{ on: activeTab === idx }"
-        @tap="changeTab(idx)"
+        :class="activeTab === idx ? 'on' : ''"
+        @click="changeTab(idx)"
       >{{ tab.label }}</view>
     </view>
 
-    <!-- 积分流水列表（按日期分组） -->
-    <view class="points-list">
+    <!-- 按日期分组的记录列表 -->
+    <view class="record-list">
       <view
-        v-for="(group, gIdx) in list"
-        :key="gIdx"
-        class="points-list__group"
+        class="date-group"
+        v-for="(group, gIndex) in groupedList"
+        :key="gIndex"
       >
-        <!-- 日期分组标题 -->
-        <view class="points-list__date">{{ group.date }}</view>
-
-        <!-- 分组内条目 -->
-        <view class="points-list__card">
+        <view class="date-label">{{ group.date }}</view>
+        <view class="group-card">
           <view
-            v-for="(item, iIdx) in group.children"
-            :key="iIdx"
-            class="points-list__item acea-row row-between-wrapper"
+            class="record-item acea-row row-between-wrapper"
+            v-for="(item, iIndex) in group.children"
+            :key="iIndex"
           >
-            <!-- 左侧：标题 + 时间 -->
-            <view class="points-list__info">
-              <view class="points-list__title line1">{{ item.title }}</view>
-              <view class="points-list__meta acea-row">
-                <view class="points-list__time">{{ item.add_time }}</view>
-                <view
-                  class="points-list__tag"
-                  :class="item.status === 'frozen' ? 'tag--frozen' : 'tag--released'"
-                >{{ item.status === 'frozen' ? '待释放' : '已释放' }}</view>
+            <!-- 左侧：标题 + 时间 + 状态标签 -->
+            <view class="record-left">
+              <view class="record-title line1">{{ item.title }}</view>
+              <view class="record-meta acea-row">
+                <text class="record-time">{{ item.add_time }}</text>
+                <text
+                  class="status-tag"
+                  :class="item.status === 'frozen' ? 'frozen' : 'released'"
+                >{{ item.status === 'frozen' ? '待释放' : '已释放' }}</text>
               </view>
             </view>
 
             <!-- 右侧：积分增减 -->
             <view
-              class="points-list__points"
-              :class="item.pm === 1 ? 'points--add' : 'points--sub'"
-            >
-              {{ item.pm === 1 ? '+' : '-' }}{{ item.points }}
-            </view>
+              class="points-amount"
+              :class="item.pm === 1 ? 'add' : 'sub'"
+            >{{ item.pm === 1 ? '+' : '-' }}{{ item.points }}</view>
           </view>
         </view>
       </view>
 
-      <!-- 加载更多提示 -->
-      <view v-if="list.length > 0" class="loadingicon acea-row row-center-wrapper">
-        <text
-          v-if="loading"
-          class="loading iconfont icon-jiazai"
-        ></text>
-        <text class="load-title">{{ loadTitle }}</text>
+      <!-- 加载状态 -->
+      <view class="loading-bar acea-row row-center-wrapper" v-if="flatList.length > 0">
+        <text class="loading iconfont icon-jiazai" :hidden="!loading"></text>
+        {{ loadTitle }}
       </view>
 
       <!-- 空状态 -->
-      <view v-if="!loading && list.length === 0" class="empty-wrap">
+      <view class="px-20 mt-20" v-if="flatList.length === 0 && !loading">
         <emptyPage title="暂无积分记录～" src="/statics/images/noOrder.gif"></emptyPage>
       </view>
     </view>
-
   </view>
 </template>
 
@@ -79,10 +68,10 @@ import colors from '@/mixins/color';
 /**
  * P17 积分明细页
  *
- * 展示当前用户的积分流水，支持按类型 Tab 筛选（全部/待释放/已释放），
- * 并以日期分组方式分页渲染列表，上拉触底自动加载下一页。
+ * 展示当前用户的积分流水，支持5个 Tab 按类型筛选，
+ * 记录按 add_time 日期字段分组展示，支持上拉翻页加载。
  *
- * @module pages/assets/points_detail
+ * @see docs/frontend-new-pages-spec.md
  */
 export default {
   name: 'PointsDetail',
@@ -94,283 +83,264 @@ export default {
   data() {
     return {
       /**
-       * Tab 配置：label 展示文案，type 对应 API 参数（'' 表示全部）
+       * Tab 配置：5个筛选类型
        * @type {Array<{ label: string, type: string }>}
        */
       tabs: [
         { label: '全部',     type: '' },
-        { label: '待释放',   type: 'frozen' },
-        { label: '已释放',   type: 'released' },
+        { label: '直推奖励', type: 'reward_direct' },
+        { label: '伞下奖励', type: 'reward_umbrella' },
+        { label: '每日释放', type: 'release' },
+        { label: '消费',     type: 'consume' },
       ],
 
-      /** 当前选中 Tab 索引，0=全部 1=待释放 2=已释放 @type {number} */
+      /** 当前激活 Tab 索引 @type {number} */
       activeTab: 0,
 
-      /**
-       * 按日期分组后的列表，每项形如 { date: string, children: Array }
-       * @type {Array<{ date: string, children: Array<Object> }>}
-       */
-      list: [],
+      /** @type {Array<Object>} 原始记录列表（所有已加载页的合并） */
+      flatList: [],
 
-      /** 已记录的日期键，用于去重分组 @type {string[]} */
-      dateKeys: [],
-
-      /** 当前请求页码 @type {number} */
+      /** @type {number} 当前页码（从 1 开始） */
       page: 1,
 
-      /** 每页条数 @type {number} */
+      /** @type {number} 每页条数 */
       limit: 15,
 
-      /** 是否正在加载（防重入锁） @type {boolean} */
+      /** @type {boolean} 是否正在加载 */
       loading: false,
 
-      /** 是否已加载全部数据 @type {boolean} */
+      /** @type {boolean} 是否已加载完全部数据 */
       finished: false,
 
-      /** 底部加载提示文案 @type {string} */
+      /** @type {string} 底部加载提示文字 */
       loadTitle: '加载更多',
     };
   },
 
-  /**
-   * 页面加载：支持从资产总览通过 type 参数直接定位 Tab。
-   * @param {Object} options - 页面跳转参数
-   * @param {string} [options.type] - 可选，'frozen' | 'released'
-   */
-  onLoad(options) {
-    if (options && options.type) {
-      const idx = this.tabs.findIndex(t => t.type === options.type);
-      if (idx > -1) this.activeTab = idx;
-    }
+  computed: {
+    /**
+     * 按 add_time 日期前10位分组
+     * @returns {Array<{ date: string, children: Object[] }>}
+     */
+    groupedList() {
+      const map = {};
+      const order = [];
+      this.flatList.forEach(item => {
+        const key = (item.add_time || '').substring(0, 10) || '未知日期';
+        if (!map[key]) {
+          map[key] = [];
+          order.push(key);
+        }
+        map[key].push(item);
+      });
+      return order.map(date => ({ date, children: map[date] }));
+    },
+  },
+
+  onLoad() {
     this.loadList();
   },
 
-  /**
-   * 上拉触底：加载下一页数据。
-   */
   onReachBottom() {
     this.loadList();
   },
 
   methods: {
     /**
-     * 切换 Tab 筛选，重置分页后重新加载列表。
-     * @param {number} idx - 点击的 Tab 索引
+     * 加载积分明细数据（分页追加）
+     */
+    loadList() {
+      if (this.loading || this.finished) return;
+
+      this.loading = true;
+      this.loadTitle = '';
+
+      const params = { page: this.page, limit: this.limit };
+      const currentType = this.tabs[this.activeTab].type;
+      if (currentType) params.type = currentType;
+
+      getPointsDetail(params)
+        .then(res => {
+          const newItems = (res.data && res.data.list) ? res.data.list : [];
+          newItems.forEach(item => this.flatList.push(item));
+
+          const isEnd = newItems.length < this.limit;
+          this.finished = isEnd;
+          this.loadTitle = isEnd ? '没有更多内容啦~' : '加载更多';
+          this.page += 1;
+        })
+        .catch(() => {
+          this.loadTitle = '加载更多';
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
+
+    /**
+     * 切换 Tab 筛选，重置列表并重新加载
+     * @param {number} idx - 目标 Tab 索引
      */
     changeTab(idx) {
       if (idx === this.activeTab) return;
       this.activeTab = idx;
-      this.resetAndLoad();
-    },
-
-    /**
-     * 重置所有分页/列表状态，然后发起首页请求。
-     */
-    resetAndLoad() {
+      this.flatList = [];
       this.page = 1;
       this.finished = false;
-      this.loading = false;
-      this.loadTitle = '加载更多';
-      this.dateKeys = [];
-      this.$set(this, 'list', []);
       this.loadList();
-    },
-
-    /**
-     * 加载积分明细数据（分页追加），通过 `getPointsDetail` 获取。
-     * 按 `add_time` 日期前缀分组追加到 `list`。
-     * 防重入：loading 为 true 或 finished 时直接返回。
-     */
-    loadList() {
-      if (this.loading || this.finished) return;
-      this.loading = true;
-      this.loadTitle = '';
-
-      const currentType = this.tabs[this.activeTab].type;
-
-      const params = {
-        page: this.page,
-        limit: this.limit,
-      };
-      if (currentType) params.type = currentType;
-
-      getPointsDetail(params).then(res => {
-        const items = (res.data && res.data.list) ? res.data.list : [];
-
-        items.forEach(item => {
-          // 取 add_time 的日期部分作为分组 key（格式 "YYYY-MM-DD"）
-          const dateKey = (item.add_time || '').split(' ')[0] || '未知日期';
-          if (!this.dateKeys.includes(dateKey)) {
-            this.dateKeys.push(dateKey);
-            this.list.push({ date: dateKey, children: [] });
-          }
-          const group = this.list.find(g => g.date === dateKey);
-          if (group) group.children.push(item);
-        });
-
-        const loadend = items.length < this.limit;
-        this.finished = loadend;
-        this.loadTitle = loadend ? '没有更多内容啦~' : '加载更多';
-        if (!loadend) this.page += 1;
-        this.loading = false;
-      }).catch(() => {
-        this.loading = false;
-        this.loadTitle = '加载更多';
-      });
     },
   },
 };
 </script>
 
 <style scoped lang="scss">
-.hjf-points-detail-page {
+.points-detail {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: #f5f5f5;
 }
 
-/* -------- Tab 导航 -------- */
-.tab-nav {
-  background-color: #fff;
+/* ===== Tab 导航 ===== */
+.nav {
+  background: #fff;
   height: 88rpx;
-  line-height: 88rpx;
+  width: 100%;
   position: sticky;
   top: 0;
   z-index: 10;
-  border-bottom: 1rpx solid #f0f0f0;
+  overflow-x: auto;
 
-  &__item {
+  .item {
     flex: 1;
+    min-width: 140rpx;
     text-align: center;
-    font-size: 28rpx;
-    color: #666;
+    font-size: 26rpx;
+    color: #333;
+    line-height: 88rpx;
     position: relative;
-    transition: color 0.2s;
+    white-space: nowrap;
 
     &.on {
       color: var(--view-theme);
-      font-size: 30rpx;
+      font-size: 28rpx;
       font-weight: 500;
 
       &::after {
         position: absolute;
-        content: '';
+        content: ' ';
         width: 48rpx;
         height: 6rpx;
-        border-radius: 10rpx;
+        border-radius: 20rpx;
         background: var(--view-theme);
         bottom: 0;
         left: 50%;
-        transform: translateX(-50%);
+        margin-left: -24rpx;
       }
     }
   }
 }
 
-/* -------- 积分列表 -------- */
-.points-list {
-  padding: 20rpx 24rpx;
+/* ===== 记录列表 ===== */
+.record-list {
+  padding: 24rpx 24rpx 40rpx;
+}
 
-  &__group {
-    margin-bottom: 20rpx;
+.date-group {
+  margin-bottom: 24rpx;
+}
+
+.date-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 12rpx;
+  padding-left: 4rpx;
+}
+
+.group-card {
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+/* ===== 单条记录 ===== */
+.record-item {
+  padding: 28rpx 30rpx;
+  align-items: center;
+
+  &:not(:last-child) {
+    border-bottom: 1rpx solid #f2f2f2;
   }
+}
 
-  &__date {
-    font-size: 24rpx;
-    color: #999;
-    padding: 12rpx 0 10rpx;
-  }
+.record-left {
+  flex: 1;
+  margin-right: 24rpx;
+  overflow: hidden;
 
-  &__card {
-    background: #fff;
-    border-radius: 16rpx;
-    overflow: hidden;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  }
-
-  &__item {
-    padding: 28rpx 28rpx;
-    border-bottom: 1rpx solid #f5f5f5;
-
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-
-  &__info {
-    flex: 1;
-    overflow: hidden;
-    padding-right: 20rpx;
-  }
-
-  &__title {
+  .record-title {
     font-size: 28rpx;
     color: #333;
+    font-weight: 500;
     margin-bottom: 10rpx;
   }
 
-  &__meta {
+  .record-meta {
     align-items: center;
-    gap: 12rpx;
+    flex-wrap: nowrap;
   }
 
-  &__time {
+  .record-time {
     font-size: 22rpx;
-    color: #aaa;
-  }
-
-  &__tag {
-    font-size: 20rpx;
-    padding: 2rpx 10rpx;
-    border-radius: 20rpx;
-
-    &.tag--frozen {
-      color: #ff8c00;
-      background: rgba(255, 140, 0, 0.1);
-    }
-
-    &.tag--released {
-      color: #52c41a;
-      background: rgba(82, 196, 26, 0.1);
-    }
-  }
-
-  &__points {
-    font-size: 32rpx;
-    font-weight: 600;
-    white-space: nowrap;
-
-    &.points--add {
-      color: var(--view-theme);
-    }
-
-    &.points--sub {
-      color: #333;
-    }
+    color: #bbb;
+    margin-right: 12rpx;
   }
 }
 
-/* -------- 加载更多 & 空状态 -------- */
-.loadingicon {
-  padding: 24rpx 0;
-  font-size: 24rpx;
+/* ===== 状态标签 ===== */
+.status-tag {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 20rpx;
+
+  &.frozen {
+    color: #999;
+    background: #f0f0f0;
+  }
+
+  &.released {
+    color: #52c41a;
+    background: rgba(82, 196, 26, 0.1);
+  }
+}
+
+/* ===== 积分数值 ===== */
+.points-amount {
+  font-size: 32rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+
+  &.add {
+    color: #19be6b;
+  }
+
+  &.sub {
+    color: #ed4014;
+  }
+}
+
+/* ===== 底部加载提示 ===== */
+.loading-bar {
+  font-size: 26rpx;
   color: #aaa;
+  padding: 24rpx 0;
 
   .loading {
     margin-right: 8rpx;
-    animation: rotating 1.5s linear infinite;
-  }
-
-  .load-title {
-    font-size: 24rpx;
+    animation: rotate 1s linear infinite;
   }
 }
 
-@keyframes rotating {
+@keyframes rotate {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
-}
-
-.empty-wrap {
-  padding: 60rpx 0;
 }
 </style>
