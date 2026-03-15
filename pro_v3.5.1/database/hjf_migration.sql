@@ -3,9 +3,9 @@
 -- 版本：Phase 2
 -- 日期：2026-03-15
 -- 执行说明：
---   1. 确保 MySQL 8.0+，数据库前缀为 eb_
+--   1. 兼容 MySQL 5.7+，数据库前缀为 eb_
 --   2. 按顺序执行 P2-01 ~ P2-05
---   3. 所有操作均使用 IF NOT EXISTS / IGNORE，可幂等重复执行
+--   3. 所有操作均做幂等处理，可重复执行
 -- ============================================================
 
 -- ============================================================
@@ -54,38 +54,106 @@ CREATE TABLE IF NOT EXISTS `eb_points_release_log` (
 
 
 -- ============================================================
--- P2-03: eb_user 扩展字段
+-- P2-03 / P2-04: eb_user / eb_store_product / eb_store_order 扩展字段
+--
+-- MySQL 5.7 不支持 "ADD COLUMN IF NOT EXISTS"，
+-- 改用存储过程 + information_schema 实现幂等检查。
 -- ============================================================
 
-ALTER TABLE `eb_user`
-  ADD COLUMN IF NOT EXISTS `member_level`      tinyint(1)  NOT NULL DEFAULT 0 COMMENT '会员等级：0普通 1创客 2云店 3服务商 4分公司',
-  ADD COLUMN IF NOT EXISTS `no_assess`         tinyint(1)  NOT NULL DEFAULT 0 COMMENT '不计入伞下业绩：1=不计入',
-  ADD COLUMN IF NOT EXISTS `frozen_points`     int(11)     NOT NULL DEFAULT 0 COMMENT '待释放（冻结）积分',
-  ADD COLUMN IF NOT EXISTS `available_points`  int(11)     NOT NULL DEFAULT 0 COMMENT '可用积分';
+DROP PROCEDURE IF EXISTS `hjf_migrate_columns`;
 
--- 为 member_level 建索引（用于 Admin 列表筛选）
-ALTER TABLE `eb_user`
-  ADD INDEX IF NOT EXISTS `idx_member_level` (`member_level`);
+DELIMITER $$
+CREATE PROCEDURE `hjf_migrate_columns`()
+BEGIN
 
+  -- ---- eb_user 字段 ----
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eb_user' AND COLUMN_NAME = 'member_level'
+  ) THEN
+    ALTER TABLE `eb_user`
+      ADD COLUMN `member_level` tinyint(1) NOT NULL DEFAULT 0 COMMENT '会员等级：0普通 1创客 2云店 3服务商 4分公司';
+  END IF;
 
--- ============================================================
--- P2-04: eb_store_product 扩展字段
--- ============================================================
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eb_user' AND COLUMN_NAME = 'no_assess'
+  ) THEN
+    ALTER TABLE `eb_user`
+      ADD COLUMN `no_assess` tinyint(1) NOT NULL DEFAULT 0 COMMENT '不计入伞下业绩：1=不计入';
+  END IF;
 
-ALTER TABLE `eb_store_product`
-  ADD COLUMN IF NOT EXISTS `is_queue_goods`  tinyint(1)   NOT NULL DEFAULT 0  COMMENT '是否报单商品：1=是',
-  ADD COLUMN IF NOT EXISTS `allow_pay_types` varchar(255) NOT NULL DEFAULT ''  COMMENT '允许积分支付类型（JSON数组）';
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eb_user' AND COLUMN_NAME = 'frozen_points'
+  ) THEN
+    ALTER TABLE `eb_user`
+      ADD COLUMN `frozen_points` int(11) NOT NULL DEFAULT 0 COMMENT '待释放（冻结）积分';
+  END IF;
 
--- 为商品列表公排筛选建索引
-ALTER TABLE `eb_store_product`
-  ADD INDEX IF NOT EXISTS `idx_is_queue_goods` (`is_queue_goods`);
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eb_user' AND COLUMN_NAME = 'available_points'
+  ) THEN
+    ALTER TABLE `eb_user`
+      ADD COLUMN `available_points` int(11) NOT NULL DEFAULT 0 COMMENT '可用积分';
+  END IF;
 
--- 同步 is_queue_goods 到订单表（后续新订单由代码写入，存量数据可按需更新）
-ALTER TABLE `eb_store_order`
-  ADD COLUMN IF NOT EXISTS `is_queue_goods` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否报单商品订单：1=是';
+  -- eb_user 索引：idx_member_level
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eb_user' AND INDEX_NAME = 'idx_member_level'
+  ) THEN
+    ALTER TABLE `eb_user` ADD INDEX `idx_member_level` (`member_level`);
+  END IF;
 
-ALTER TABLE `eb_store_order`
-  ADD INDEX IF NOT EXISTS `idx_is_queue_goods` (`is_queue_goods`);
+  -- ---- eb_store_product 字段 ----
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eb_store_product' AND COLUMN_NAME = 'is_queue_goods'
+  ) THEN
+    ALTER TABLE `eb_store_product`
+      ADD COLUMN `is_queue_goods` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否报单商品：1=是';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eb_store_product' AND COLUMN_NAME = 'allow_pay_types'
+  ) THEN
+    ALTER TABLE `eb_store_product`
+      ADD COLUMN `allow_pay_types` varchar(255) NOT NULL DEFAULT '' COMMENT '允许积分支付类型（JSON数组）';
+  END IF;
+
+  -- eb_store_product 索引：idx_is_queue_goods
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eb_store_product' AND INDEX_NAME = 'idx_is_queue_goods'
+  ) THEN
+    ALTER TABLE `eb_store_product` ADD INDEX `idx_is_queue_goods` (`is_queue_goods`);
+  END IF;
+
+  -- ---- eb_store_order 字段 ----
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eb_store_order' AND COLUMN_NAME = 'is_queue_goods'
+  ) THEN
+    ALTER TABLE `eb_store_order`
+      ADD COLUMN `is_queue_goods` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否报单商品订单：1=是';
+  END IF;
+
+  -- eb_store_order 索引：idx_is_queue_goods
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eb_store_order' AND INDEX_NAME = 'idx_is_queue_goods'
+  ) THEN
+    ALTER TABLE `eb_store_order` ADD INDEX `idx_is_queue_goods` (`is_queue_goods`);
+  END IF;
+
+END$$
+DELIMITER ;
+
+CALL `hjf_migrate_columns`();
+DROP PROCEDURE IF EXISTS `hjf_migrate_columns`;
 
 
 -- ============================================================

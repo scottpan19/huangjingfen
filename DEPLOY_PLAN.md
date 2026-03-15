@@ -1,6 +1,6 @@
 # 黄精粉健康商城二次开发发布部署方案
 
-> **环境**：云服务器已运行原始 CRMEB Pro v3.5（Docker + Nginx + Swoole + Redis + MySQL 8.0）
+> **环境**：云服务器已运行原始 CRMEB Pro v3.5（Docker + Nginx + Swoole + Redis + MySQL 5.7）
 > **分支**：`claude/hjf-queue-admin-apis-hsymG`
 > **变更范围**：44个文件（后端PHP新增30个文件 + 修改3个 + 前端JS/Vue 11个）
 
@@ -13,7 +13,7 @@
 | 项目 | 要求 | 确认方式 |
 |------|------|---------|
 | PHP | ≥ 8.0，扩展：bcmath、mbstring、redis、curl | `php -v && php -m` |
-| MySQL | ≥ 8.0 | `mysql --version` |
+| MySQL | ≥ 5.7（已兼容，8.0 同样支持） | `mysql --version` |
 | Redis | ≥ 5.0 | `redis-cli --version` |
 | Node.js | ≥ 14（编译 Admin 前端用） | `node -v` |
 | npm | ≥ 6 | `npm -v` |
