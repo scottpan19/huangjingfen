@@ -8,7 +8,7 @@ import request from '@/plugins/request';
 import { MOCK_POINTS_RELEASE_LOG } from '@/utils/hjfMockData.js';
 
 /** @type {boolean} Phase 1 使用 Mock；Phase 4 集成时改为 false */
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 /**
  * Mock 包装：300ms 延迟，返回 { data: ..., status: 200 }

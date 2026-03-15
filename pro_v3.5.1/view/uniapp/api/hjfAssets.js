@@ -13,7 +13,7 @@ import {
 } from '@/utils/hjfMockData.js';
 
 /** @type {boolean} 是否使用 Mock 数据（Phase 1 开发为 true，Phase 4 集成改为 false） */
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 /**
  * Mock 包装：返回与 request 相同形状的 Promise（status + data），带延迟模拟网络

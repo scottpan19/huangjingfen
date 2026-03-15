@@ -23,5 +23,6 @@ return [
         'clear:cache' => \app\command\ClearCache::class,
         'reset:password' => \app\command\ResetAdminPwd::class,
         'holiday_gift_push_task' => \app\command\HolidayGiftPushTask::class,
+        'hjf:release-points'     => \app\command\HjfReleasePoints::class,
     ],
 ];

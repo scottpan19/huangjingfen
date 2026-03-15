@@ -13,6 +13,7 @@ namespace app\listener\order;
 
 
 use app\jobs\agent\AgentJob;
+use app\jobs\hjf\HjfOrderPayJob;
 use app\jobs\order\OrderCreateAfterJob;
 use app\jobs\order\OrderDeliveryJob;
 use app\jobs\order\OrderJob;
@@ -126,6 +127,15 @@ class Pay implements ListenerInterface
         event('notice.notice', [$orderInfo, 'admin_pay_success_code']);
         //对外接口推送事件
         event('out.outPush', ['order_pay_push', ['order_id' => (int)$orderInfo['id']]]);
+
+        // 公排入队 + 积分奖励 + 等级升级（仅报单商品订单）
+        if (!empty($orderInfo['is_queue_goods'])) {
+            HjfOrderPayJob::dispatch([
+                (int)$orderInfo['uid'],
+                (string)$orderInfo['order_id'],
+                (float)($orderInfo['pay_price'] ?? 3600.00),
+            ]);
+        }
         //自动打标签
         event('user.auto.label', [$orderInfo['uid'], '', [], []]);
 

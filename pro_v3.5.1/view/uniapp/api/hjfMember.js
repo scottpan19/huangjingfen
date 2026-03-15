@@ -12,7 +12,7 @@ import {
 } from '@/utils/hjfMockData.js';
 
 /** @type {boolean} Phase 1 前端开发为 true，Phase 4 集成时改为 false */
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 /**
  * Mock 包装：返回与 request.get() 相同形状的 Promise
