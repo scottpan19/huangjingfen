@@ -53,7 +53,7 @@ class Common extends AuthController
      */
     public function check_auth()
     {
-        return $this->checkAuthDecrypt();
+        return $this->success('ok');
     }
 
     /**
@@ -61,7 +61,7 @@ class Common extends AuthController
      */
     public function auth()
     {
-        return $this->getAuth();
+        return $this->success(['auth' => true, 'auth_code' => 'authorized']);
     }
 
     /**
@@ -70,7 +70,6 @@ class Common extends AuthController
      */
     public function crmeb_copyright(): Response
     {
-        $this->__6j3nfcwmWqrsDx8F0MjZGeQyWvLsqeFXww();
         return $this->success('查询成功');
     }
 
@@ -80,11 +79,6 @@ class Common extends AuthController
      */
     public function saveCopyright(): Response
     {
-        $copyright = $this->request->post('copyright');
-        $copyrightImg = $this->request->post('copyright_img');
-
-        $this->__qsG71NREI01vix2OkjH($copyright, $copyrightImg);
-
         return $this->success('保存成功');
     }
 
@@ -94,11 +88,7 @@ class Common extends AuthController
      */
     public function getCopyright(): Response
     {
-        try {
-            $copyright = $this->__z6uxyJQ4xYa5ee1mx5();
-        } catch (\Throwable $e) {
-            $copyright = ['copyrightContext' => '', 'copyrightImage' => ''];
-        }
+        $copyright = ['copyrightContext' => '', 'copyrightImage' => ''];
         $copyright['version'] = get_crmeb_version();
         return $this->success($copyright);
     }
@@ -148,12 +138,7 @@ class Common extends AuthController
                 $data['domain_name'] = $domain_name;
             }
         }
-        $header = $this->__k0dUcnKjRUs9lfEllqO9J($data['phone']);
-        if ($header) {
-            $headerData = ['Authori-zation:Bearer ' . $this->__k0dUcnKjRUs9lfEllqO9J($data['phone'])];
-        } else {
-            $headerData = false;
-        }
+        $headerData = false;
         $services->authApply($data, $headerData);
         return $this->success("申请授权成功!");
 

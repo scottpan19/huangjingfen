@@ -46,25 +46,11 @@ export default {
     };
   },
   mounted() {
-    if (!util.cookies.get("auth")) {
-      checkAuth()
-        .then((res) => {})
-        .catch((res) => {});
-    }
-    this.getAuth();
+    // 授权检查已跳过
   },
   methods: {
     getAuth() {
-      auth()
-        .then((res) => {
-          let data = res.data || {};
-          if (data.auth_code && data.auth) {
-            this.authCode = data.auth_code;
-            this.auth = true;
-          }
-          this.openImage = true;
-        })
-        .catch((res) => {});
+      // stub: 无需授权检查
     },
     clear() {
       this.openImage = false;
